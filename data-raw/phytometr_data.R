@@ -1,4 +1,4 @@
-# Create example datasets for phytometer package
+# Create example datasets for phytometr package
 set.seed(123)
 
 # 1. Environmental data

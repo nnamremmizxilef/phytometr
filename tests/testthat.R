@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(phytometer)
+library(phytometr)
 
-test_check("phytometer")
+test_check("phytometr")

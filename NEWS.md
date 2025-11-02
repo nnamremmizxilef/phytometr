@@ -1,8 +1,8 @@
-# phytometer 0.0.0.9000
+# phytometr 0.0.0.9000
 
 ## Initial Release
 
-* Initial development version of phytometer package
+* Initial development version of phytometR package
 * Package setup with MIT license and GitHub repository
 
 ## Data Generation Functions

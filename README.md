@@ -1,11 +1,11 @@
-# phytometeR
+# phytometR
 
 <div style="display: flex; align-items: center;">
 
-  <img src="inst/hex/logo.png" alt="phytometeR logo" height="160" style="margin-right: 25px;">
+  <img src="inst/hex/logo.png" alt="phytometR logo" height="160" style="margin-right: 25px;">
 
   <p style="margin: 0;">
-    <strong>phytometeR</strong> provides tools for analyzing multi-omics data integrated with environmental measurements in ecological and evolutionary studies.  
+    <strong>phytometR</strong> provides tools for analyzing multi-omics data integrated with environmental measurements in ecological and evolutionary studies.  
     The package facilitates investigation of organism responses to environmental stressors across spatial and temporal gradients.
   </p>
 
@@ -29,14 +29,14 @@
 Install the development version from GitHub:
 ```r
 # install.packages("devtools")
-devtools::install_github("nnamremmizxilef/phytometer")
+devtools::install_github("nnamremmizxilef/phytometr")
 ```
 
 ## Quick Start
 
 ### Generate Example Data
 ```r
-library(phytometer)
+library(phytometr)
 
 # Create datasets with default parameters
 env <- envirodata()
@@ -159,9 +159,9 @@ MIT © Felix Zimmermann
 
 ## Citation
 
-If you use phytometeR in your research, please cite:
+If you use phytometR in your research, please cite:
 ```
-Zimmermann, F. (2025). phytometeR: Analysis Tools for Tree Holobiont 
+Zimmermann, F. (2025). phytometR: Analysis Tools for Tree Holobiont 
 Acclimation and Adaptation Research. R package version 0.0.0.9000.
-https://github.com/nnamremmizxilef/phytometer
+https://github.com/nnamremmizxilef/phytometr
 ```
