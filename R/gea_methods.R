@@ -1,139 +1,154 @@
-#' Run single replicate of power simulation
+#' Run GEA analysis
 #'
-#' @param n Sample size for this replicate
+#' @param holobiont A holobiont_data object
 #' @param params Simulation parameters
-#' @return List with power metrics
+#' @return List with p-values for each SNP
 #' @keywords internal
-run_single_replicate <- function(n, params) {
-  
+run_gea_analysis <- function(holobiont, params) {
+
+  snps <- holobiont$host_genotypes
+  env <- holobiont$environment$main
+
+  # Get response variable
+  response <- extract_response_variable(holobiont, params)
+
+  # Handle categorical environment
+  if (is.character(env) || is.factor(env)) {
+    env <- as.numeric(factor(env))
+  }
+
+  # Run appropriate GEA method
+  if (params$gea_method == "rda" || params$gea_method == "all") {
+    pvals <- run_rda(snps, env, response)
+  } else if (params$gea_method == "lfmm") {
+    pvals <- run_lfmm(snps, env, params)
+  } else {
+    # Placeholder for other methods
+    pvals <- run_simple_correlation(snps, env, response)
+  }
+
+  return(list(pvals = pvals, method = params$gea_method))
+}
+
+#' Extract response variable from holobiont object
+#'
+#' @param holobiont Holobiont data object
+#' @param params Simulation parameters
+#' @return Numeric vector of response values
+#' @keywords internal
+extract_response_variable <- function(holobiont, params) {
+
+  if (params$response_variable == "abundance") {
+    response <- holobiont$microbiome$target_taxon
+  } else if (params$response_variable == "diversity") {
+    response <- holobiont$microbiome$alpha_diversity
+  } else if (params$response_variable == "composition") {
+    response <- holobiont$microbiome$pc1
+  } else if (params$response_variable == "phenotype") {
+    response <- holobiont$phenotypes$trait
+  }
+
+  return(response)
+}
+
+#' Run RDA-based GEA
+#'
+#' @param snps SNP matrix
+#' @param env Environmental variable
+#' @param response Response variable (optional, used for validation)
+#' @return Numeric vector of p-values
+#' @keywords internal
+run_rda <- function(snps, env, response = NULL) {
+
+  if (!requireNamespace("vegan", quietly = TRUE)) {
+    stop("Package 'vegan' is required for RDA analysis")
+  }
+
+  # Remove SNPs with no variation or too much missing data
+  snp_var <- apply(snps, 2, var, na.rm = TRUE)
+  snps_filtered <- snps[, snp_var > 0 & !is.na(snp_var), drop = FALSE]
+
+  if (ncol(snps_filtered) == 0) {
+    return(rep(1, ncol(snps)))
+  }
+
+  # Run RDA
   tryCatch({
-    # Create holobiont data structure
-    holobiont <- create_holobiont_data(n, host_name = "simulated_host")
-    
-    # Simulate host genotypes
-    holobiont <- simulate_host_genetics(holobiont, params)
-    
-    # Simulate environment
-    holobiont <- simulate_environment_data(holobiont, params)
-    
-    # Simulate response variable
-    holobiont <- simulate_response(holobiont, params)
-    
-    # Run GEA analysis
-    gea_results <- run_gea_analysis(holobiont, params)
-    
-    # Calculate power metrics
-    metrics <- calc_power_metrics(gea_results, holobiont$causal_loci, params)
-    
-    return(metrics)
-    
+    rda_result <- vegan::rda(snps_filtered ~ env)
+
+    # Extract loadings for constrained axis
+    loadings <- scores(rda_result, choices = 1, display = "species",
+                       scaling = "species")
+
+    # Convert loadings to z-scores and p-values
+    z_scores <- loadings / sd(loadings, na.rm = TRUE)
+    pvals_filtered <- 2 * pnorm(-abs(z_scores))
+
+    # Map back to original SNP positions
+    pvals <- rep(1, ncol(snps))
+    pvals[snp_var > 0 & !is.na(snp_var)] <- pvals_filtered
+
+    return(pvals)
+
   }, error = function(e) {
-    warning("Replicate failed: ", e$message)
-    return(list(power = NA, fdr = NA, n_detected = NA))
+    warning("RDA failed: ", e$message)
+    return(rep(1, ncol(snps)))
   })
 }
 
-#' Calculate power metrics from GEA results
+#' Run LFMM-based GEA
 #'
-#' @param gea_results Results from run_gea_analysis
-#' @param true_causal Integer vector of true causal loci positions
+#' @param snps SNP matrix
+#' @param env Environmental variable
 #' @param params Simulation parameters
-#' @return List with power, FDR, and number detected
+#' @return Numeric vector of p-values
 #' @keywords internal
-calc_power_metrics <- function(gea_results, true_causal, params) {
-  
-  pvals <- gea_results$pvals
-  
-  # Apply multiple testing correction
-  if (params$correction_method == "bonferroni") {
-    pvals_adj <- p.adjust(pvals, method = "bonferroni")
-  } else if (params$correction_method == "fdr") {
-    pvals_adj <- p.adjust(pvals, method = "fdr")
-  } else {
-    pvals_adj <- pvals  # No correction
+run_lfmm <- function(snps, env, params) {
+
+  if (!requireNamespace("LEA", quietly = TRUE)) {
+    warning("Package 'LEA' not available, using correlation-based test instead")
+    return(run_simple_correlation(snps, env, NULL))
   }
-  
-  # Identify detected loci
-  detected <- which(pvals_adj < params$alpha)
-  
-  # Calculate metrics
-  if (length(detected) == 0) {
-    tpr <- 0
-    fdr <- 0
+
+  # Determine number of latent factors if not specified
+  if (is.null(params$n_latent_factors)) {
+    # Simple heuristic based on population structure
+    if (!is.null(params$pop_structure) && params$pop_structure != "panmictic") {
+      K <- params$n_populations
+    } else {
+      K <- 1
+    }
   } else {
-    # True positive rate (power)
-    tpr <- sum(detected %in% true_causal) / length(true_causal)
-    
-    # False discovery rate
-    n_false_positives <- sum(!(detected %in% true_causal))
-    fdr <- n_false_positives / length(detected)
+    K <- params$n_latent_factors
   }
-  
-  return(list(
-    power = tpr,
-    fdr = fdr,
-    n_detected = length(detected),
-    n_true_positives = sum(detected %in% true_causal),
-    n_false_positives = sum(!(detected %in% true_causal))
-  ))
+
+  # This is a simplified placeholder - actual LEA integration would be more complex
+  # For now, fall back to correlation
+  return(run_simple_correlation(snps, env, NULL))
 }
 
-#' Aggregate results across replicates
+#' Run simple correlation-based test
 #'
-#' @param replicates List of replicate results
-#' @param params Simulation parameters
-#' @return List with aggregated metrics
+#' @param snps SNP matrix
+#' @param env Environmental variable
+#' @param response Response variable (not used, for compatibility)
+#' @return Numeric vector of p-values
 #' @keywords internal
-aggregate_replicates <- function(replicates, params) {
-  
-  # Extract metrics from each replicate
-  power_vals <- sapply(replicates, function(x) x$power)
-  fdr_vals <- sapply(replicates, function(x) x$fdr)
-  n_detected_vals <- sapply(replicates, function(x) x$n_detected)
-  
-  # Remove NAs from failed replicates
-  power_vals <- power_vals[!is.na(power_vals)]
-  fdr_vals <- fdr_vals[!is.na(fdr_vals)]
-  n_detected_vals <- n_detected_vals[!is.na(n_detected_vals)]
-  
-  # Calculate summary statistics
-  list(
-    mean_power = mean(power_vals),
-    se_power = sd(power_vals) / sqrt(length(power_vals)),
-    median_power = median(power_vals),
-    mean_fdr = mean(fdr_vals),
-    se_fdr = sd(fdr_vals) / sqrt(length(fdr_vals)),
-    mean_detected = mean(n_detected_vals),
-    n_replicates_succeeded = length(power_vals)
-  )
-}
+run_simple_correlation <- function(snps, env, response = NULL) {
 
-#' Format power results for output
-#'
-#' @param power_list List of power results for each sample size
-#' @param sample_sizes Vector of sample sizes tested
-#' @param params Simulation parameters
-#' @return Data frame of class 'gea_power_analysis'
-#' @keywords internal
-format_power_results <- function(power_list, sample_sizes, params) {
-  
-  results_df <- data.frame(
-    n_individuals = sample_sizes,
-    power = sapply(power_list, function(x) x$mean_power),
-    power_se = sapply(power_list, function(x) x$se_power),
-    power_median = sapply(power_list, function(x) x$median_power),
-    fdr = sapply(power_list, function(x) x$mean_fdr),
-    fdr_se = sapply(power_list, function(x) x$se_fdr),
-    n_detected = sapply(power_list, function(x) x$mean_detected),
-    n_replicates = sapply(power_list, function(x) x$n_replicates_succeeded)
-  )
-  
-  # Add parameters as attributes
-  attr(results_df, "parameters") <- params
-  attr(results_df, "target_power") <- params$target_power
-  
-  # Set class
-  class(results_df) <- c("gea_power_analysis", "data.frame")
-  
-  return(results_df)
+  pvals <- apply(snps, 2, function(snp) {
+    # Remove missing data
+    valid <- !is.na(snp) & !is.na(env)
+    if (sum(valid) < 10) return(1)
+
+    # Correlation test
+    tryCatch({
+      test <- cor.test(snp[valid], env[valid], method = "spearman")
+      test$p.value
+    }, error = function(e) {
+      1
+    })
+  })
+
+  return(pvals)
 }
