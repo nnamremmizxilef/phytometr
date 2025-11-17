@@ -85,8 +85,8 @@ run_rda <- function(snps, env, response = NULL) {
     rda_result <- vegan::rda(snps_filtered ~ env)
 
     # Extract loadings for constrained axis
-    loadings <- scores(rda_result, choices = 1, display = "species",
-                       scaling = "species")
+    loadings <- vegan::scores(rda_result, choices = 1, display = "species",
+                              scaling = "species")
 
     # Convert loadings to z-scores and p-values
     z_scores <- loadings / sd(loadings, na.rm = TRUE)
