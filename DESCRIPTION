@@ -1,35 +1,52 @@
 Package: phytometr
-Title: Analysis Tools for Tree Holobiont Acclimation and Adaptation Research
-Version: 0.0.0.9000
-Authors@R: person("Felix", "Zimmermann", email = "felix.zimmermann@wsl.ch", 
-    role = c("aut", "cre"))
-Description: Provides analytical tools for investigating acclimation and 
-    adaptation mechanisms in forest tree holobionts.
-    Functions support analysis of multi-omics data (genomics, 
-    epigenomics, transcriptomics, metabolomics) integrated with physiological, 
-    morphological, and environmental measurements from controlled experiments 
-    and field monitoring. Includes tools for processing microclimatic data, 
-    analyzing stress gradients (drought, herbivory), and linking environmental 
-    variation to holobiont responses across spatial scales. Designed by the 
-    PhytOakmeter research unit studying tree responses across environmental 
-    gradients from ecotron to pan-European scales.
+Title: Power Analysis for Genotype-Environment Association Studies in Holobiont Systems
+Version: 0.1.0.9000
+Authors@R: 
+    person("Felix", "Zimmermann", 
+           email = "felix.zimmermann@wsl.ch", 
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0009-0002-0762-2454"))
+Description: A comprehensive framework for experimental design and power analysis 
+    in genotype-environment association (GEA) studies, with specialized support
+    for holobiont systems (host-microbiome-environment interactions). Simulates 
+    realistic population genetic data using coalescent theory via 'coala', 
+    environmental gradients, and holobiont responses (microbiome abundance, 
+    diversity, composition, or host phenotypes) to determine required sample 
+    sizes for detecting genotype-environment associations. Provides comprehensive
+    diagnostic tools for assessing data quality, including tests for 
+    genotype-environment independence, population structure confounding, 
+    signal-to-noise ratios, linkage disequilibrium patterns, and environmental 
+    gradient quality. Supports multiple population structures (panmictic, 
+    isolation-by-distance, discrete populations), demographic histories 
+    (bottlenecks, expansions), and genotype-by-environment interactions. 
+    Implements GEA methods including RDA (Redundancy Analysis) with support 
+    for LFMM (Latent Factor Mixed Models). Designed for forest tree holobiont 
+    research studying adaptation and acclimation across environmental gradients,
+    developed by the PhytOakmeter research unit.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 URL: https://github.com/nnamremmizxilef/phytometr
 BugReports: https://github.com/nnamremmizxilef/phytometr/issues
-Imports: 
-    corrplot,
-    dplyr,
-    ggplot2,
-    magrittr,
-    readr,
-    rlang,
-    tidyr
-Suggests: 
+Depends:
+    R (>= 4.0.0),
+    coala (>= 0.7.0)
+Imports:
+    ggplot2 (>= 3.4.0),
+    MASS,
+    parallel,
+    stats,
+    utils,
+    graphics,
+    grDevices
+Suggests:
+    LEA,
+    irlba,
     testthat (>= 3.0.0),
-    writexl
+    knitr,
+    rmarkdown,
+    covr
+VignetteBuilder: knitr
 Config/testthat/edition: 3
-Depends: 
-    R (>= 3.5)
+Language: en-US
