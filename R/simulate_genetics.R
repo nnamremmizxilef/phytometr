@@ -80,6 +80,9 @@ simulate_host_genetics <- function(holobiont, params) {
     )
   }
   
+  # Add summary statistic to return segregating sites
+  model <- model + coala::sumstat_seg_sites()
+  
   # Simulate genetic data
   sim_data <- simulate(model)
   snp_matrix <- convert_to_snp_matrix(sim_data)
