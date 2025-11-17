@@ -120,18 +120,14 @@ simulate_host_genetics <- function(holobiont, params) {
 #' @keywords internal
 convert_to_snp_matrix <- function(coala_sim) {
   
-  # Get number of individuals
-  n_ind <- coala_sim$pars$sample_size
-  if (is.list(n_ind)) {
-    n_ind <- sum(unlist(n_ind))
-  }
-  
   # Extract segregating sites from all loci
-  # Each locus is a matrix: rows = individuals, cols = SNPs (positions as colnames)
+  # Each locus is a list with $snps, $position, $trio_locus
   snp_list <- lapply(coala_sim$seg_sites, function(locus) {
-    if (!is.null(locus) && nrow(locus) > 0 && ncol(locus) > 0) {
-      # All columns are SNP data
-      return(as.matrix(locus))
+    if (!is.null(locus) && !is.null(locus$snps)) {
+      snp_data <- locus$snps
+      if (nrow(snp_data) > 0 && ncol(snp_data) > 0) {
+        return(as.matrix(snp_data))
+      }
     }
     return(NULL)
   })
@@ -139,11 +135,14 @@ convert_to_snp_matrix <- function(coala_sim) {
   # Remove NULL entries
   valid_snps <- snp_list[!sapply(snp_list, is.null)]
   
-  # If no SNPs generated, return empty matrix with correct dimensions
+  # Get number of individuals from first valid locus
   if (length(valid_snps) == 0) {
     warning("No segregating sites generated. Try increasing mutation_rate or n_loci.")
-    return(matrix(0, nrow = n_ind, ncol = 0))
+    # Can't determine n_ind without data, return NULL
+    return(NULL)
   }
+  
+  n_ind <- nrow(valid_snps[[1]])
   
   # Combine all loci by columns (cbind)
   snp_matrix <- do.call(cbind, valid_snps)
