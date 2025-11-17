@@ -1,9 +1,9 @@
-# phytometr
+# phytometR
 
 <div style="display: flex; align-items: center;">
   <img src="inst/hex/logo.png" alt="phytometr logo" height="160" style="margin-right: 25px;">
   <p style="margin: 0;">
-    <strong>phytometr</strong> provides comprehensive power analysis and experimental design tools for genotype-environment association (GEA) studies in holobiont systems. Simulate realistic population genetic data, environmental gradients, and holobiont responses to determine required sample sizes and assess data quality for GEA analyses.
+    <strong>phytometR</strong> provides comprehensive power analysis and experimental design tools for genotype-environment association (GEA) studies in holobiont systems. Simulate realistic population genetic data, environmental gradients, and holobiont responses to determine required sample sizes and assess data quality for GEA analyses.
   </p>
 </div>
 
@@ -12,7 +12,7 @@
 
 ## Overview
 
-**phytometr** is designed for researchers planning genotype-environment association (GEA) studies, particularly in holobiont systems (host-microbiome-environment interactions). The package helps answer critical experimental design questions:
+**phytometR** is designed for researchers planning genotype-environment association (GEA) studies, particularly in holobiont systems (host-microbiome-environment interactions). The package helps answer critical experimental design questions:
 
 - **How many host individuals do I need to detect genetic effects on holobiont composition?** → Power analysis across sample sizes
 - **How much environmental variation do I need (e.g., how far apart should sites be)?** → Gradient strength simulations
@@ -289,8 +289,8 @@ oak_sample_size <- simulate_gea_power(
   gradient_type = "linear",                # Precipitation gradient
   env_range = c(400, 800),                 # 400mm precipitation range
   response_variable = "composition",       # Fungal community PC1
-  holobiont_heritability = 0.20,          # Host genetic effect: 20%
-  env_effect_on_holobiont = 0.30,         # Direct drought effect: 30%
+  holobiont_heritability = 0.20,           # Host genetic effect: 20%
+  env_effect_on_holobiont = 0.30,          # Direct drought effect: 30%
   effect_size = 0.25,                      # Expected effect per QTL
   gea_method = "rda",
   n_replicates = 500,                      # High precision
@@ -370,9 +370,9 @@ calculate_required_n(gxe_power, target_power = 0.8)
 abundance_power <- simulate_gea_power(
   n_individuals = seq(40, 200, by = 20),
   response_variable = "abundance",         # Single taxon
-  holobiont_heritability = 0.15,          # Moderate genetic control
-  env_effect_on_holobiont = 0.25,         # Environmental effect
-  n_causal = 10,                          # QTL controlling abundance
+  holobiont_heritability = 0.15,           # Moderate genetic control
+  env_effect_on_holobiont = 0.25,          # Environmental effect
+  n_causal = 10,                           # QTL controlling abundance
   n_replicates = 200
 )
 
@@ -387,10 +387,10 @@ plot(abundance_power)
 diversity_power <- simulate_gea_power(
   n_individuals = seq(30, 150, by = 15),
   response_variable = "diversity",         # Alpha diversity
-  env_range = c(10, 30),                  # Temperature range
-  holobiont_heritability = 0.10,          # Weak genetic control
-  env_effect_on_holobiont = 0.40,         # Strong environmental effect
-  baseline_diversity = 50,                # Mean richness
+  env_range = c(10, 30),                   # Temperature range
+  holobiont_heritability = 0.10,           # Weak genetic control
+  env_effect_on_holobiont = 0.40,          # Strong environmental effect
+  baseline_diversity = 50,                 # Mean richness
   n_replicates = 200
 )
 
@@ -638,11 +638,11 @@ assumptions <- assess_gea_assumptions(my_data)
 
 ### Key GEA Methodology Papers
 
-- Forester BR, Lasky JR, Wagner HH, Urban DL (2018). Comparing methods for detecting multilocus adaptation with multivariate genotype-environment associations. *Molecular Ecology*, 27: 2215-2233. [DOI: 10.1111/mec.14584](https://doi.org/10.1111/mec.14584)
+- Forester BR, Lasky JR, Wagner HH, Urban DL (2018). Comparing methods for detecting multilocus adaptation with multivariate genotype-environment associations. *Molecular Ecology*, 27: 2215-2233.
 
-- Rellstab C, Gugerli F, Eckert AJ, Hancock AM, Holderegger R (2015). A practical guide to environmental association analysis in landscape genomics. *Molecular Ecology*, 24: 4348-4370. [DOI: 10.1111/mec.13322](https://doi.org/10.1111/mec.13322)
+- Rellstab C, Gugerli F, Eckert AJ, Hancock AM, Holderegger R (2015). A practical guide to environmental association analysis in landscape genomics. *Molecular Ecology*, 24: 4348-4370.
 
-- Capblancq T, Forester BR (2021). Redundancy analysis: A Swiss Army Knife for landscape genomics. *Methods in Ecology and Evolution*, 12: 2298-2309. [DOI: 10.1111/2041-210X.13722](https://doi.org/10.1111/2041-210X.13722)
+- Capblancq T, Forester BR (2021). Redundancy analysis: A Swiss Army Knife for landscape genomics. *Methods in Ecology and Evolution*, 12: 2298-2309.
 
 ### Power Analysis
 
@@ -656,7 +656,7 @@ assumptions <- assess_gea_assumptions(my_data)
 
 ## Related Projects
 
-This package was developed for the **PhytOakmeter** research unit at WSL (Swiss Federal Institute for Forest, Snow and Landscape Research), studying oak holobiont responses to drought stress across environmental gradients from controlled experiments to pan-European field transects.
+This package was developed by the **PhytOakmeter** research unit, studying oak holobiont responses to drought stress across environmental gradients from controlled experiments to pan-European field transects.
 
 ## License
 
