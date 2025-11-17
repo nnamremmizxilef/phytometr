@@ -7,9 +7,11 @@
 run_gea_analysis <- function(holobiont, params) {
 
   snps <- holobiont$host_genotypes
-  if (!is.null(holobiont$environment$main)) {
+
+  # Get environment variable
+  if ("main" %in% names(holobiont$environment)) {
     env <- holobiont$environment$main
-  } else if (!is.null(holobiont$environment$env1)) {
+  } else if ("env1" %in% names(holobiont$environment)) {
     env <- holobiont$environment$env1
   } else {
     env <- holobiont$environment[[1]]
