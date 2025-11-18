@@ -6,6 +6,14 @@
 \usage{
 plot_env_individual(ind_env)
 }
+\arguments{
+\item{ind_env}{Data frame with individual-level environment.
+May contain a \code{group_id} column plus one or more
+environmental variables.}
+}
+\value{
+A ggplot object with density plots per variable.
+}
 \description{
 Plot individual-level environmental distributions
 }

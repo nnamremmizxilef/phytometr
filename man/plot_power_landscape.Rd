@@ -2,10 +2,17 @@
 % Please edit documentation in R/diagnostic_plots.R
 \name{plot_power_landscape}
 \alias{plot_power_landscape}
-\title{Plot power landscape (design exploration)}
+\title{Plot power landscape over design choices}
 \usage{
 plot_power_landscape(power_results)
 }
+\arguments{
+\item{power_results}{Data frame with at least columns
+\code{n_groups}, \code{n_per_group}, and \code{power_env}.}
+}
+\value{
+A ggplot object.
+}
 \description{
-Plot power landscape (design exploration)
+Plot power landscape over design choices
 }

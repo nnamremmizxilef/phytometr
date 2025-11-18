@@ -2,8 +2,7 @@
 % Please edit documentation in R/diagnostic_plots.R
 \name{plot_holobiont_components}
 \alias{plot_holobiont_components}
-\title{Plot holobiont component diagnostics (unique feature)
-Shows structure, correlations, PCA, env-effect signatures}
+\title{Holobiont component diagnostics}
 \usage{
 plot_holobiont_components(
   components_df,
@@ -12,7 +11,26 @@ plot_holobiont_components(
   color_by = NULL
 )
 }
+\arguments{
+\item{components_df}{Data frame returned by
+\code{simulate_holobiont_components()}. Must contain an \code{id}
+column plus one or more component columns.}
+
+\item{env}{Optional environmental data (data frame or matrix) with the
+same number of rows as \code{components_df}. Used to compute
+env–component correlations.}
+
+\item{labels}{Optional vector of labels for points in the PCA plot.
+Defaults to \code{components_df$id}.}
+
+\item{color_by}{Optional column name in \code{components_df} or vector
+of length \code{nrow(components_df)} used to colour points in PCA.}
+}
+\value{
+A list of ggplot objects. Always returns \code{PCA} and
+\code{CorMatrix}; if \code{env} is supplied, also returns
+\code{EnvEffects}.
+}
 \description{
-Plot holobiont component diagnostics (unique feature)
-Shows structure, correlations, PCA, env-effect signatures
+PCA + correlation heatmaps for simulated holobiont components.
 }

@@ -2,12 +2,22 @@
 % Please edit documentation in R/diagnostic_plots.R
 \name{plot_variance_decomposition}
 \alias{plot_variance_decomposition}
-\title{Plot variance decomposition for holobiont components
-A unique + important diagnostic!}
+\title{Plot variance decomposition for holobiont components}
 \usage{
 plot_variance_decomposition(power_results, components)
 }
+\arguments{
+\item{power_results}{A data frame (or list) containing at least
+\code{var_host}, the fraction of variance attributed to host.
+Only the first row is used.}
+
+\item{components}{The component specification list used for simulation,
+where each component has an element \code{r2_env}.}
+}
+\value{
+A stacked barplot (ggplot object) showing variance fractions
+for environment, host, and residual per component.
+}
 \description{
 Plot variance decomposition for holobiont components
-A unique + important diagnostic!
 }

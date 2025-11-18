@@ -35,7 +35,10 @@ Imports:
     stats,
     utils,
     graphics,
-    grDevices
+    grDevices,
+    reshape2,
+    tidyr,
+    tidyselect
 Suggests:
     coala (>= 0.7.0),
     LEA,

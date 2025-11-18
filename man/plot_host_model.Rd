@@ -6,6 +6,12 @@
 \usage{
 plot_host_model(host_model)
 }
+\arguments{
+\item{host_model}{Object returned by \code{define_host_model()}.}
+}
+\value{
+A ggplot object with a simple textual summary.
+}
 \description{
 Plot host model diagnostics
 }
