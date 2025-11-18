@@ -2,10 +2,16 @@
 % Please edit documentation in R/diagnostic_plots.R
 \name{plot_env_space}
 \alias{plot_env_space}
-\title{Plot environmental space (group level)}
+\title{Plot environmental space}
 \usage{
 plot_env_space(env_space)
 }
+\arguments{
+\item{env_space}{An object created by define_env_space().}
+}
+\value{
+A ggplot showing planned vs realised environmental gradients.
+}
 \description{
-Plot environmental space (group level)
+Plot environmental space
 }
