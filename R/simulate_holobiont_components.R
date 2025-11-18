@@ -1,130 +1,114 @@
-#' Simulate multiple holobiont components driven by environment
+#' Simulate a holobiont response driven by one or more environmental variables
 #'
-#' This function simulates several holobiont response variables
-#' (e.g. root bacteria, root fungi, herbivores, "whole holobiont")
-#' from one or more environmental predictors. Each component can
-#' have its own literature-based effect sizes (R² values) for
-#' the environmental variables.
+#' This function simulates a single univariate holobiont response
+#' (e.g. microbial diversity, community PC1, trait value) such that
+#' a specified proportion of its variance is explained by one or
+#' several environmental variables.
 #'
-#' Under the hood, it calls \code{simulate_env_response()} once
-#' for each component and returns all simulated responses in a
-#' single data frame.
+#' Typical use cases:
+#' \itemize{
+#'   \item "Temperature explains ~30% of variation in root bacterial diversity"
+#'   \item "Temperature explains 20% and water availability 10% of fungal richness"
+#' }
+#' Given an environmental design and literature-based R^2 values,
+#' the function returns a simulated response vector with that
+#' approximate variance structure.
 #'
 #' @param env Numeric vector, matrix, or data.frame of environmental
 #'   variables. Each column is a predictor (e.g. temperature, water).
-#'   This is passed directly to \code{simulate_env_response()}.
-#' @param components Named list describing each holobiont component.
-#'   Each element should be a list with at least:
 #'   \itemize{
-#'     \item \code{r2_env}: either a single numeric (total R² for this
-#'           component) or a numeric vector per environmental variable,
-#'           as in \code{simulate_env_response()}.
-#'     \item \code{total_var}: optional, total variance of the component
-#'           (default 1 if not provided).
+#'     \item A numeric vector means a single predictor.
+#'     \item A matrix/data.frame means multiple predictors.
 #'   }
-#'
-#'   Example:
-#'   \preformatted{
-#'   components <- list(
-#'     root_bacteria = list(
-#'       r2_env    = c(temp = 0.30, water = 0.10),
-#'       total_var = 1
-#'     ),
-#'     root_fungi = list(
-#'       r2_env    = c(temp = 0.20),
-#'       total_var = 1
-#'     ),
-#'     herbivores = list(
-#'       r2_env    = c(temp = 0.05, water = 0.25)
-#'     )
-#'   )
+#' @param r2_env Either:
+#'   \itemize{
+#'     \item a single numeric in [0, 1]: total proportion of response
+#'           variance explained by all environmental variables together
+#'           (shared equally across columns), or
+#'     \item a numeric vector in [0, 1] of length equal to \code{ncol(env)},
+#'           optionally named to match \code{colnames(env)}, giving the
+#'           variance contribution of each environmental variable.
 #'   }
+#'   For example, if \code{env} has columns \code{temp} and \code{water},
+#'   you can use \code{r2_env = c(temp = 0.3, water = 0.1)}.
+#' @param total_var Numeric > 0. Total variance of the simulated response.
+#'   Default is 1. The environmental and residual components are scaled
+#'   so that their variances sum to \code{total_var}.
+#' @param seed Optional integer. If provided, used to set the random seed
+#'   for reproducibility.
 #'
-#' @param seed Optional integer. If provided, used as a base seed.
-#'   Each component will internally use \code{seed + i} (for component
-#'   i) to remain reproducible but independent.
-#'
-#' @return A data.frame with one column per component and as many
-#'   rows as there are observations in \code{env}.
+#' @return Numeric vector of length \code{length(env)} (if \code{env} is
+#'   a vector) or \code{nrow(env)} (if \code{env} is a matrix/data.frame),
+#'   representing the simulated holobiont response.
 #'
 #' @examples
+#' # Single environmental variable: temperature
 #' set.seed(1)
-#' n <- 100
+#' temp <- seq(10, 20, length.out = 100)
+#' resp <- simulate_env_response(temp, r2_env = 0.3)
+#' summary(lm(resp ~ temp))$r.squared  # roughly ~0.3
+#'
+#' # Two variables: temperature and water
+#' set.seed(1)
+#' n <- 120
 #' temp  <- seq(15, 25, length.out = n)
 #' water <- seq(0.3, 0.9, length.out = n)
-#' env   <- cbind(temp = temp, water = water)
+#' env <- cbind(temp = temp, water = water)
 #'
-#' components <- list(
-#'   root_bacteria = list(
-#'     r2_env    = c(temp = 0.30, water = 0.10),
-#'     total_var = 1
-#'   ),
-#'   root_fungi = list(
-#'     r2_env    = c(temp = 0.20, water = 0.05),
-#'     total_var = 1
-#'   )
+#' resp2 <- simulate_env_response(
+#'   env    = env,
+#'   r2_env = c(temp = 0.2, water = 0.1)  # ~30% total explained by env
 #' )
-#'
-#' holo <- simulate_holobiont_components(env, components, seed = 123)
-#' str(holo)
-#' summary(lm(root_bacteria ~ temp + water, data = cbind(holo, env)))
+#' summary(lm(resp2 ~ temp + water))$r.squared
 #'
 #' @export
-simulate_holobiont_components <- function(
-  env,
-  components,
-  seed = NULL
-) {
-  # --- Basic checks on components ---
+simulate_holobiont_components <- function(components, env_data) {
+
+  if (missing(components)) {
+    stop("'components' must be provided and must be a named list.")
+  }
+
   if (!is.list(components) || is.null(names(components))) {
     stop("'components' must be a *named* list.")
   }
 
-  comp_names <- names(components)
-  if (any(comp_names == "")) {
-    stop("All entries in 'components' must have a non-empty name.")
+  if (missing(env_data)) {
+    stop("'env_data' must be provided and must contain environmental variables.")
   }
 
-  # Determine number of observations (n) from env
-  if (is.vector(env) && !is.list(env)) {
-    n <- length(env)
-  } else {
-    env <- as.matrix(env)
-    n <- nrow(env)
-  }
+  env_data <- as.data.frame(env_data)
+  n <- nrow(env_data)
 
-  # Prepare output data.frame
-  result <- as.data.frame(matrix(NA_real_, nrow = n, ncol = length(components)))
-  colnames(result) <- comp_names
+  results <- data.frame(id = seq_len(n))
 
-  # Optional: set a base seed
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
+  # Loop over holobiont components
+  for (comp in names(components)) {
 
-  # --- Loop over components and simulate each one ---
-  for (i in seq_along(components)) {
-    comp_name <- comp_names[i]
-    comp_spec <- components[[i]]
+    spec <- components[[comp]]
 
-    # Extract r2_env and total_var, with defaults
-    if (is.null(comp_spec$r2_env)) {
-      stop("Component '", comp_name, "' must have an 'r2_env' element.")
+    if (!("r2_env" %in% names(spec))) {
+      stop(sprintf("Component '%s' must contain 'r2_env'.", comp))
     }
-    r2_env    <- comp_spec$r2_env
-    total_var <- if (!is.null(comp_spec$total_var)) comp_spec$total_var else 1
 
-    # For reproducibility: different seed for each component
-    comp_seed <- if (!is.null(seed)) seed + i else NULL
+    r2_vec <- spec$r2_env
 
-    # Call lower-level simulator for this component
-    result[[comp_name]] <- simulate_env_response(
-      env       = env,
-      r2_env    = r2_env,
-      total_var = total_var,
-      seed      = comp_seed
-    )
+    # Check that env predictors exist
+    if (!all(names(r2_vec) %in% colnames(env_data))) {
+      stop(sprintf("Environmental variables for '%s' not found in env_data", comp))
+    }
+
+    # Convert R² to beta coefficients: beta = sqrt(R²)
+    betas <- sqrt(r2_vec)
+
+    signal <-
+      as.numeric(as.matrix(env_data[, names(r2_vec), drop = FALSE]) %*% betas)
+
+    # Add environmental noise scaled so the resulting R² matches
+    noise_sd <- sd(signal) * (1 - mean(r2_vec))
+    noise <- rnorm(n, mean = 0, sd = noise_sd)
+
+    results[[comp]] <- signal + noise
   }
 
-  return(result)
+  return(results)
 }
