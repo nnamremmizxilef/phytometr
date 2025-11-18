@@ -25,17 +25,21 @@ run_gea_analysis <- function(holobiont, params) {
     env <- as.numeric(factor(env))
   }
 
+  method <- params$gea_method
+
   # Run appropriate GEA method
-  if (params$gea_method == "rda" || params$gea_method == "all") {
+  if (method %in% c("rda", "all")) {
     pvals <- run_rda(snps, env, response)
-  } else if (params$gea_method == "lfmm") {
+
+  } else if (method == "lfmm") {
     pvals <- run_lfmm(snps, env, params)
+
   } else {
-    # Placeholder for other methods
+    # Placeholder for other methods (baypass, gemma, etc.)
     pvals <- run_simple_correlation(snps, env, response)
   }
 
-  return(list(pvals = pvals, method = params$gea_method))
+  return(list(pvals = pvals, method = method))
 }
 
 #' Extract response variable from holobiont object

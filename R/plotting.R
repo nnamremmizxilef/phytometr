@@ -146,3 +146,99 @@ plot_n_detected <- function(power_results) {
   
   return(p)
 }
+
+#' Plot power analysis results for multiple GEA methods
+#'
+#' @param x Object of class 'gea_power_multi'
+#' @param add_target_line Logical. Add horizontal line at target power? (default: TRUE)
+#' @param add_error_bars Logical. Add error bars for power estimates? (default: TRUE)
+#' @param ... Additional arguments passed to ggplot
+#' @return ggplot object
+#' @export
+plot.gea_power_multi <- function(x,
+                                 add_target_line = TRUE,
+                                 add_error_bars = TRUE,
+                                 ...) {
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Package 'ggplot2' is required for plotting")
+  }
+
+  # x is a named list of gea_power_analysis objects
+  methods <- names(x)
+
+  # Build a combined data.frame: one row per (n_individuals, method)
+  df_list <- lapply(seq_along(x), function(i) {
+    res <- x[[i]]
+    params <- attr(res, "parameters")
+    method_name <- if (!is.null(params$gea_method)) params$gea_method else methods[i]
+
+    data.frame(
+      n_individuals = res$n_individuals,
+      power         = res$power,
+      power_se      = res$power_se,
+      method        = method_name,
+      stringsAsFactors = FALSE
+    )
+  })
+  plot_data <- do.call(rbind, df_list)
+
+  # Assume a common target_power (take from first element)
+  target_power <- attr(x[[1]], "target_power")
+  params_first <- attr(x[[1]], "parameters")
+
+  p <- ggplot2::ggplot(
+    plot_data,
+    ggplot2::aes(
+      x = n_individuals,
+      y = power,
+      color = method,
+      group = method
+    )
+  ) +
+    ggplot2::geom_line(linewidth = 1) +
+    ggplot2::geom_point(size = 3)
+
+  if (add_error_bars) {
+    p <- p + ggplot2::geom_errorbar(
+      ggplot2::aes(
+        ymin = power - power_se,
+        ymax = power + power_se
+      ),
+      width = (max(plot_data$n_individuals) - min(plot_data$n_individuals)) * 0.02
+    )
+  }
+
+  if (!is.null(target_power) && add_target_line) {
+    p <- p + ggplot2::geom_hline(
+      yintercept = target_power,
+      linetype = "dashed",
+      color = "#d7301f",
+      linewidth = 0.8
+    )
+  }
+
+  p <- p +
+    ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+    ggplot2::labs(
+      x = "Sample size (n individuals)",
+      y = "Statistical power",
+      title = sprintf(
+        "GEA Power Analysis (%s): multiple methods",
+        params_first$response_variable
+      ),
+      subtitle = sprintf(
+        "Effect size: %.2f | %d causal loci",
+        params_first$effect_size,
+        params_first$n_causal
+      ),
+      color = "GEA method"
+    ) +
+    ggplot2::theme_minimal(base_size = 12) +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(face = "bold", size = 14),
+      plot.subtitle = ggplot2::element_text(size = 11, color = "gray40"),
+      panel.grid.minor = ggplot2::element_blank()
+    )
+
+  return(p)
+}

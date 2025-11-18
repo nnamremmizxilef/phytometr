@@ -163,8 +163,9 @@ simulate_gea_power <- function(
   n_cores = parallel::detectCores() - 1,
   seed = NULL,
   verbose = TRUE
-) {
-# Match arguments
+  ) {
+  
+  # Match arguments
   pop_structure <- match.arg(pop_structure)
   env_type <- match.arg(env_type)
   gradient_type <- match.arg(gradient_type)
@@ -172,8 +173,14 @@ simulate_gea_power <- function(
   effect_size_distribution <- match.arg(effect_size_distribution)
   microbiome_structure <- match.arg(microbiome_structure)
   correction_method <- match.arg(correction_method)
-  
   gea_method <- match.arg(gea_method)
+  
+  # Allow one or several GEA methods
+  gea_method <- match.arg(
+  gea_method,
+  choices = c("rda", "lfmm", "baypass", "gemma", "all"),
+  several.ok = TRUE
+  )
   
   if (effect_size < 0) {
   stop("effect_size must be non-negative")
