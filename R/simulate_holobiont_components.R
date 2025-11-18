@@ -1,65 +1,29 @@
-#' Simulate a holobiont response driven by one or more environmental variables
+#' Simulate holobiont components from environmental predictors
 #'
-#' This function simulates a single univariate holobiont response
-#' (e.g. microbial diversity, community PC1, trait value) such that
-#' a specified proportion of its variance is explained by one or
-#' several environmental variables.
+#' This function takes a specification of how strongly different environmental
+#' variables affect each holobiont component (in terms of R²) and simulates
+#' component values accordingly.
 #'
-#' Typical use cases:
-#' \itemize{
-#'   \item "Temperature explains ~30% of variation in root bacterial diversity"
-#'   \item "Temperature explains 20% and water availability 10% of fungal richness"
-#' }
-#' Given an environmental design and literature-based R^2 values,
-#' the function returns a simulated response vector with that
-#' approximate variance structure.
-#'
-#' @param env Numeric vector, matrix, or data.frame of environmental
-#'   variables. Each column is a predictor (e.g. temperature, water).
-#'   \itemize{
-#'     \item A numeric vector means a single predictor.
-#'     \item A matrix/data.frame means multiple predictors.
+#' @param components A named list. Each entry defines one holobiont component
+#'   and must contain an element \code{r2_env}, which is a named numeric vector
+#'   giving the (approximate) variance contribution of each environmental
+#'   variable. For example:
+#'   \preformatted{
+#'   components = list(
+#'     root_bacteria = list(r2_env = c(temperature = 0.30)),
+#'     root_fungi    = list(r2_env = c(temperature = 0.25, moisture = 0.10))
+#'   )
 #'   }
-#' @param r2_env Either:
-#'   \itemize{
-#'     \item a single numeric in [0, 1]: total proportion of response
-#'           variance explained by all environmental variables together
-#'           (shared equally across columns), or
-#'     \item a numeric vector in [0, 1] of length equal to \code{ncol(env)},
-#'           optionally named to match \code{colnames(env)}, giving the
-#'           variance contribution of each environmental variable.
-#'   }
-#'   For example, if \code{env} has columns \code{temp} and \code{water},
-#'   you can use \code{r2_env = c(temp = 0.3, water = 0.1)}.
-#' @param total_var Numeric > 0. Total variance of the simulated response.
-#'   Default is 1. The environmental and residual components are scaled
-#'   so that their variances sum to \code{total_var}.
-#' @param seed Optional integer. If provided, used to set the random seed
-#'   for reproducibility.
+#'   The sum of \code{r2_env} values is treated as the total R² of environment
+#'   for that component; if it exceeds 1, it is truncated with a warning.
 #'
-#' @return Numeric vector of length \code{length(env)} (if \code{env} is
-#'   a vector) or \code{nrow(env)} (if \code{env} is a matrix/data.frame),
-#'   representing the simulated holobiont response.
+#' @param env_data A data frame or matrix with one row per individual (or group)
+#'   and one column per environmental variable (e.g. \code{temperature},
+#'   \code{moisture}).
 #'
-#' @examples
-#' # Single environmental variable: temperature
-#' set.seed(1)
-#' temp <- seq(10, 20, length.out = 100)
-#' resp <- simulate_env_response(temp, r2_env = 0.3)
-#' summary(lm(resp ~ temp))$r.squared  # roughly ~0.3
-#'
-#' # Two variables: temperature and water
-#' set.seed(1)
-#' n <- 120
-#' temp  <- seq(15, 25, length.out = n)
-#' water <- seq(0.3, 0.9, length.out = n)
-#' env <- cbind(temp = temp, water = water)
-#'
-#' resp2 <- simulate_env_response(
-#'   env    = env,
-#'   r2_env = c(temp = 0.2, water = 0.1)  # ~30% total explained by env
-#' )
-#' summary(lm(resp2 ~ temp + water))$r.squared
+#' @return A data frame with one row per row in \code{env_data}, an \code{id}
+#'   column, and one column per holobiont component. Values are on a latent
+#'   standardised scale (mean ≈ 0, variance ≈ 1) unless rescaled later.
 #'
 #' @export
 simulate_holobiont_components <- function(components, env_data) {
@@ -67,48 +31,78 @@ simulate_holobiont_components <- function(components, env_data) {
   if (missing(components)) {
     stop("'components' must be provided and must be a named list.")
   }
-
   if (!is.list(components) || is.null(names(components))) {
     stop("'components' must be a *named* list.")
   }
-
   if (missing(env_data)) {
     stop("'env_data' must be provided and must contain environmental variables.")
   }
 
   env_data <- as.data.frame(env_data)
   n <- nrow(env_data)
+  res <- data.frame(id = seq_len(n))
 
-  results <- data.frame(id = seq_len(n))
+  for (comp_name in names(components)) {
 
-  # Loop over holobiont components
-  for (comp in names(components)) {
-
-    spec <- components[[comp]]
+    spec <- components[[comp_name]]
 
     if (!("r2_env" %in% names(spec))) {
-      stop(sprintf("Component '%s' must contain 'r2_env'.", comp))
+      stop(sprintf("Component '%s' must contain 'r2_env'.", comp_name))
     }
 
     r2_vec <- spec$r2_env
 
-    # Check that env predictors exist
+    # Check variables present in env_data
     if (!all(names(r2_vec) %in% colnames(env_data))) {
-      stop(sprintf("Environmental variables for '%s' not found in env_data", comp))
+      missing_vars <- setdiff(names(r2_vec), colnames(env_data))
+      stop(
+        sprintf(
+          "For component '%s', env variables not found in env_data: %s",
+          comp_name,
+          paste(missing_vars, collapse = ", ")
+        )
+      )
     }
 
-    # Convert R² to beta coefficients: beta = sqrt(R²)
-    betas <- sqrt(r2_vec)
+    # Extract and standardise relevant env variables
+    env_sub <- scale(env_data[, names(r2_vec), drop = FALSE])
 
-    signal <-
-      as.numeric(as.matrix(env_data[, names(r2_vec), drop = FALSE]) %*% betas)
+    # Total R² explained by all env variables together
+    total_r2 <- sum(r2_vec)
+    if (total_r2 <= 0) {
+      warning(
+        sprintf(
+          "Component '%s' has non-positive total R² (sum(r2_env) = %g); using noise only.",
+          comp_name, total_r2
+        )
+      )
+      res[[comp_name]] <- rnorm(n)
+      next
+    }
+    if (total_r2 >= 1) {
+      warning(
+        sprintf(
+          "Component '%s' has total R² >= 1 (sum(r2_env) = %g); truncating to 0.99.",
+          comp_name, total_r2
+        )
+      )
+      total_r2 <- 0.99
+    }
 
-    # Add environmental noise scaled so the resulting R² matches
-    noise_sd <- sd(signal) * (1 - mean(r2_vec))
-    noise <- rnorm(n, mean = 0, sd = noise_sd)
+    # Relative weights across env variables
+    weights <- r2_vec / sum(r2_vec)
 
-    results[[comp]] <- signal + noise
+    # Latent environmental score (mean 0, var ~1)
+    env_score <- drop(as.matrix(env_sub) %*% weights)
+
+    # Independent noise
+    epsilon <- rnorm(n)
+
+    # Construct response: cor(env_score, Y)^2 ≈ total_r2
+    y_latent <- sqrt(total_r2) * env_score + sqrt(1 - total_r2) * epsilon
+
+    res[[comp_name]] <- y_latent
   }
 
-  return(results)
+  return(res)
 }
