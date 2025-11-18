@@ -173,9 +173,7 @@ simulate_gea_power <- function(
   microbiome_structure <- match.arg(microbiome_structure)
   correction_method <- match.arg(correction_method)
   
-  if (length(gea_method) == 1) {
-    gea_method <- match.arg(gea_method)
-  }
+  gea_method <- match.arg(gea_method)
   
   if (effect_size < 0) {
   stop("effect_size must be non-negative")
