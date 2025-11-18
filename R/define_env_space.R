@@ -1,114 +1,112 @@
-#' Define a potential environmental gradient or set of conditions
+#' Define a multivariate environmental space (several variables)
 #'
-#' This function defines a set of *potential* sites (field) or
-#' conditions (controlled experiments) along a single environmental
-#' axis (e.g. temperature, moisture), without deciding how many
-#' individuals will be sampled. It is meant as a first step to
-#' describe what environmental range and structure are realistically
-#' achievable.
+#' This function defines a set of potential sites/conditions along
+#' multiple environmental axes (e.g. temperature, moisture, pH),
+#' without fixing the number of individuals. It calls
+#' \code{define_env_gradient()} once for each variable and combines
+#' the results.
 #'
-#' You specify:
+#' For each environmental variable, you specify:
 #' \itemize{
-#'   \item the feasible environmental range (e.g. 15--25 °C in the field,
-#'         10--35 °C in growth chambers),
-#'   \item the number of potential sites/conditions along that range,
-#'   \item the shape of the gradient (linear, random, patchy),
-#'   \item how precisely you can hit the targeted group means
-#'         (\code{target_sd}),
-#'   \item how much variation you expect within each group
-#'         (\code{within_group_sd}).
+#'   \item a feasible range (\code{range}),
+#'   \item a gradient shape (\code{shape}),
+#'   \item how precisely you can hit the target mean (\code{target_sd}),
+#'   \item expected within-group variation (\code{within_group_sd}).
 #' }
 #'
-#' The output describes the *environment space* for a single
-#' variable that later power functions can use to decide how many
-#' sites/conditions and replicates per group are needed.
+#' All variables share the same number of groups (\code{n_groups}) and
+#' context (\code{"field"} or \code{"controlled"}).
 #'
 #' @param context Character, either \code{"field"} or \code{"controlled"}.
-#'   This is mainly descriptive, but typically:
-#'   \itemize{
-#'     \item \code{"field"} for natural gradients (limited range, less control),
-#'     \item \code{"controlled"} for chambers/greenhouses (wider range, more control).
+#'   Describes whether this is a field gradient or a controlled experiment.
+#' @param variables Named list specifying each environmental variable.
+#'   Each element must be a list with at least a \code{range} element,
+#'   and optionally \code{shape}, \code{target_sd}, and
+#'   \code{within_group_sd}. Example:
+#'   \preformatted{
+#'   variables <- list(
+#'     temperature = list(
+#'       range          = c(15, 25),
+#'       shape          = "linear",
+#'       target_sd      = 1,
+#'       within_group_sd = 0.5
+#'     ),
+#'     moisture = list(
+#'       range          = c(0.2, 0.6),
+#'       shape          = "random",
+#'       target_sd      = 0.05,
+#'       within_group_sd = 0.1
+#'     )
+#'   )
 #'   }
-#' @param env_range Numeric length-2 vector \code{c(min, max)} giving
-#'   the feasible range of the environmental variable.
 #' @param n_groups Integer. Number of potential sites/conditions along
-#'   the gradient. This does \emph{not} fix the number of individuals;
-#'   it only defines possible group mean values.
-#' @param shape Character. Shape of the gradient of planned group means:
-#'   \itemize{
-#'     \item \code{"linear"}: evenly spaced from \code{env_range[1]} to
-#'           \code{env_range[2]}.
-#'     \item \code{"random"}: group means randomly scattered within the
-#'           range, then sorted.
-#'     \item \code{"patchy"}: group means clustered toward the extremes
-#'           of the range (approximate patchiness).
-#'   }
-#' @param target_sd Numeric >= 0. Standard deviation of the deviation
-#'   of realised group means from planned values. Larger values mean
-#'   you cannot exactly hit the intended condition (e.g. inter-annual
-#'   variability in the field). Use small values (e.g. 0.1) for
-#'   controlled experiments.
-#' @param within_group_sd Numeric >= 0. Expected standard deviation of
-#'   environmental values within each site/condition (micro-variation).
-#'   This is stored as metadata for later individual-level simulation.
-#' @param seed Optional integer. If provided, used to set the random
-#'   seed for reproducibility.
+#'   each environmental gradient.
+#' @param seed Optional integer. If provided, used as a base seed.
+#'   Each variable will internally use \code{seed + i} for reproducibility.
 #'
-#' @return A data.frame with one row per potential site/condition, and
-#'   columns:
+#' @return A list with class \code{"env_space"} containing:
 #'   \itemize{
-#'     \item \code{group_id}: integer group index.
 #'     \item \code{context}: field or controlled.
-#'     \item \code{planned_env}: planned group mean value.
-#'     \item \code{realised_env}: realised group mean value after
-#'           adding \code{target_sd} noise and clipping to \code{env_range}.
-#'     \item \code{within_group_sd}: expected within-group SD.
+#'     \item \code{n_groups}: number of groups.
+#'     \item \code{variables}: character vector of variable names.
+#'     \item \code{planned}: data.frame with columns \code{group_id} and
+#'           one column per variable giving the planned group means.
+#'     \item \code{realised}: data.frame with columns \code{group_id} and
+#'           one column per variable giving realised group means.
+#'     \item \code{within_group_sd}: named numeric vector of within-group SDs
+#'           for each variable.
 #'   }
+#'
+#'   You can obtain a matrix of realised group means for use in
+#'   holobiont simulations via:
+#'   \code{as.matrix(env_space$realised[,-1])}.
 #'
 #' @examples
-#' # Field gradient: 15-25 °C, 6 sites, moderate control
-#' field_grad <- define_env_gradient(
-#'   context         = "field",
-#'   env_range       = c(15, 25),
-#'   n_groups        = 6,
-#'   shape           = "linear",
-#'   target_sd       = 1,    # years can be off by ~1 °C
-#'   within_group_sd = 0.5   # micro-variation within site
+#' # Define multivariate field environment: temperature + moisture
+#' vars <- list(
+#'   temperature = list(
+#'     range          = c(15, 25),
+#'     shape          = "linear",
+#'     target_sd      = 1,
+#'     within_group_sd = 0.5
+#'   ),
+#'   moisture = list(
+#'     range          = c(0.2, 0.6),
+#'     shape          = "random",
+#'     target_sd      = 0.05,
+#'     within_group_sd = 0.1
+#'   )
 #' )
-#' field_grad
 #'
-#' # Controlled experiment: 10-35 °C, 8 chambers, very precise
-#' ctrl_grad <- define_env_gradient(
-#'   context         = "controlled",
-#'   env_range       = c(10, 35),
-#'   n_groups        = 8,
-#'   shape           = "linear",
-#'   target_sd       = 0.1,  # you can hit target ~exactly
-#'   within_group_sd = 0.2
+#' env_space <- define_env_space(
+#'   context  = "field",
+#'   variables = vars,
+#'   n_groups = 6,
+#'   seed     = 123
 #' )
-#' ctrl_grad
+#'
+#' env_space$planned
+#' env_space$realised
+#'
+#' # Use realised group means (e.g. as env for holobiont simulation)
+#' realised_env_mat <- as.matrix(env_space$realised[,-1])
 #'
 #' @export
-define_env_gradient <- function(
-  context         = c("field", "controlled"),
-  env_range       = c(15, 25),
-  n_groups        = 5L,
-  shape           = c("linear", "random", "patchy"),
-  target_sd       = 0,
-  within_group_sd = 0,
-  seed            = NULL
+define_env_space <- function(
+  context   = c("field", "controlled"),
+  variables,
+  n_groups  = 5L,
+  seed      = NULL
 ) {
-  # Match arguments and basic checks
   context <- match.arg(context)
-  shape   <- match.arg(shape)
 
-  if (!is.numeric(env_range) || length(env_range) != 2L) {
-    stop("'env_range' must be a numeric vector of length 2: c(min, max).")
+  # Check variables list
+  if (!is.list(variables) || is.null(names(variables))) {
+    stop("'variables' must be a *named* list.")
   }
-  env_min <- env_range[1]
-  env_max <- env_range[2]
-  if (env_min >= env_max) {
-    stop("'env_range[1]' must be < 'env_range[2]'.")
+  var_names <- names(variables)
+  if (any(var_names == "")) {
+    stop("All entries in 'variables' must have non-empty names.")
   }
 
   if (!is.numeric(n_groups) || length(n_groups) != 1L || n_groups < 1) {
@@ -116,52 +114,56 @@ define_env_gradient <- function(
   }
   n_groups <- as.integer(n_groups)
 
-  if (!is.numeric(target_sd) || length(target_sd) != 1L || target_sd < 0) {
-    stop("'target_sd' must be a single number >= 0.")
-  }
-  if (!is.numeric(within_group_sd) || length(within_group_sd) != 1L || within_group_sd < 0) {
-    stop("'within_group_sd' must be a single number >= 0.")
-  }
-
   if (!is.null(seed)) {
     set.seed(seed)
   }
 
-  # Define planned group means
-  if (shape == "linear") {
-    planned_env <- seq(env_min, env_max, length.out = n_groups)
-  } else if (shape == "random") {
-    planned_env <- sort(stats::runif(n_groups, min = env_min, max = env_max))
-  } else if (shape == "patchy") {
-    # Rough "patchy" behaviour: half of groups near lower end, half near upper end
-    n_low  <- floor(n_groups / 2)
-    n_high <- n_groups - n_low
-    range_quarter <- (env_max - env_min) / 4
+  # Containers for outputs
+  planned_df  <- data.frame(group_id = seq_len(n_groups))
+  realised_df <- data.frame(group_id = seq_len(n_groups))
+  within_sd_vec <- numeric(length(variables))
+  names(within_sd_vec) <- var_names
 
-    low_vals  <- stats::runif(n_low,
-                              min = env_min,
-                              max = env_min + range_quarter)
-    high_vals <- stats::runif(n_high,
-                              min = env_max - range_quarter,
-                              max = env_max)
-    planned_env <- sort(c(low_vals, high_vals))
+  # Loop over variables and call define_env_gradient() for each
+  for (i in seq_along(variables)) {
+    v_name <- var_names[i]
+    v_spec <- variables[[i]]
+
+    if (is.null(v_spec$range) || length(v_spec$range) != 2L) {
+      stop("Variable '", v_name, "' must have a 'range' element of length 2.")
+    }
+
+    v_shape           <- if (!is.null(v_spec$shape)) v_spec$shape else "linear"
+    v_target_sd       <- if (!is.null(v_spec$target_sd)) v_spec$target_sd else 0
+    v_within_group_sd <- if (!is.null(v_spec$within_group_sd)) v_spec$within_group_sd else 0
+
+    # Different seed per variable if base seed is provided
+    v_seed <- if (!is.null(seed)) seed + i else NULL
+
+    grad <- define_env_gradient(
+      context         = context,
+      env_range       = v_spec$range,
+      n_groups        = n_groups,
+      shape           = v_shape,
+      target_sd       = v_target_sd,
+      within_group_sd = v_within_group_sd,
+      seed            = v_seed
+    )
+
+    planned_df[[v_name]]  <- grad$planned_env
+    realised_df[[v_name]] <- grad$realised_env
+    within_sd_vec[v_name] <- v_within_group_sd
   }
 
-  # Realised group means (imperfect control)
-  if (target_sd > 0) {
-    realised_env <- planned_env + stats::rnorm(n_groups, mean = 0, sd = target_sd)
-    realised_env <- pmax(pmin(realised_env, env_max), env_min)  # clip to range
-  } else {
-    realised_env <- planned_env
-  }
-
-  out <- data.frame(
-    group_id        = seq_len(n_groups),
+  out <- list(
     context         = context,
-    planned_env     = planned_env,
-    realised_env    = realised_env,
-    within_group_sd = within_group_sd
+    n_groups        = n_groups,
+    variables       = var_names,
+    planned         = planned_df,
+    realised        = realised_df,
+    within_group_sd = within_sd_vec
   )
+  class(out) <- "env_space"
 
   return(out)
 }
