@@ -5,7 +5,12 @@
 \title{Plot holobiont component diagnostics (unique feature)
 Shows structure, correlations, PCA, env-effect signatures}
 \usage{
-plot_holobiont_components(components_df, env = NULL)
+plot_holobiont_components(
+  components_df,
+  env = NULL,
+  labels = NULL,
+  color_by = NULL
+)
 }
 \description{
 Plot holobiont component diagnostics (unique feature)

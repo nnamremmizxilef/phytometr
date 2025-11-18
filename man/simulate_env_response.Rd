@@ -2,76 +2,50 @@
 % Please edit documentation in R/simulate_env_response.R
 \name{simulate_env_response}
 \alias{simulate_env_response}
-\title{Simulate a holobiont response driven by one or more environmental variables}
+\title{Simulate holobiont responses to environmental conditions}
 \usage{
-simulate_env_response(env, r2_env = 0.3, total_var = 1, seed = NULL)
+simulate_env_response(env_data, components, host_model = NULL)
 }
 \arguments{
-\item{env}{Numeric vector, matrix, or data.frame of environmental
-variables. Each column is a predictor (e.g. temperature, water).
-\itemize{
-\item A numeric vector means a single predictor.
-\item A matrix/data.frame means multiple predictors.
-}}
+\item{env_data}{A data frame or matrix with environmental values.
+Rows are individuals (or groups), columns are variables
+like "temperature", "moisture", etc.}
 
-\item{r2_env}{Either:
-\itemize{
-\item a single numeric between 0 and 1: total proportion of response
-variance explained by all environmental variables together
-(shared equally across columns), or
-\item a numeric vector between 0 and 1 of length equal to \code{ncol(env)},
-optionally named to match \code{colnames(env)}, giving the
-variance contribution of each environmental variable.
-}
-For example, if \code{env} has columns \code{temp} and \code{water},
-you can use \code{r2_env = c(temp = 0.3, water = 0.1)}.}
+\item{components}{A named list describing holobiont components
+and their R² with environment (see
+\code{simulate_holobiont_components()}).}
 
-\item{total_var}{Numeric > 0. Total variance of the simulated response.
-Default is 1. The environmental and residual components are scaled
-so that their variances sum to \code{total_var}.}
-
-\item{seed}{Optional integer. If provided, used to set the random seed
-for reproducibility.}
+\item{host_model}{Optional host model object created by
+\code{define_host_model()}. Currently included for API
+consistency; host-specific variance can be added in later
+development.}
 }
 \value{
-Numeric vector of length \code{length(env)} (if \code{env} is
-a vector) or \code{nrow(env)} (if \code{env} is a matrix/data.frame),
-representing the simulated holobiont response.
+A data frame with one row per row in \code{env_data}
+and one column per holobiont component (plus an \code{id}
+column).
 }
 \description{
-This function simulates a single univariate holobiont response
-(e.g. microbial diversity, community PC1, trait value) such that
-a specified proportion of its variance is explained by one or
-several environmental variables.
+This is a high-level wrapper that takes:
+\itemize{
+\item individual- or group-level environmental data,
+\item a specification of holobiont components and their
+environment-driven R² values (see \code{simulate_holobiont_components()}),
+\item an optional host model (clone vs natural population).
+}
 }
 \details{
-Typical use cases:
-\itemize{
-\item "Temperature explains ~30\% of variation in root bacterial diversity"
-\item "Temperature explains 20\% and water availability 10\% of fungal richness"
-}
-Given an environmental design and literature-based R^2 values,
-the function returns a simulated response vector with that
-approximate variance structure.
+For now, the host model is accepted but not used to add extra
+host-driven variance (this can be extended in future phases).
 }
 \examples{
-# Single environmental variable: temperature
-set.seed(1)
-temp <- seq(10, 20, length.out = 100)
-resp <- simulate_env_response(temp, r2_env = 0.3)
-summary(lm(resp ~ temp))$r.squared  # roughly ~0.3
-
-# Two variables: temperature and water
-set.seed(1)
-n <- 120
-temp  <- seq(15, 25, length.out = n)
-water <- seq(0.3, 0.9, length.out = n)
-env <- cbind(temp = temp, water = water)
-
-resp2 <- simulate_env_response(
-  env    = env,
-  r2_env = c(temp = 0.2, water = 0.1)  # ~30\% total explained by env
+\dontrun{
+env_data <- env_space$realised[, c("temperature", "moisture")]
+components_spec <- list(
+  root_bacteria = list(r2_env = c(temperature = 0.3)),
+  root_fungi    = list(r2_env = c(temperature = 0.25, moisture = 0.10))
 )
-summary(lm(resp2 ~ temp + water))$r.squared
+resp <- simulate_env_response(env_data, components_spec)
+}
 
 }

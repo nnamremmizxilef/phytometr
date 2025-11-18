@@ -77,26 +77,42 @@ plot_host_model <- function(host_model) {
 #' Plot holobiont component diagnostics (unique feature)
 #' Shows structure, correlations, PCA, env-effect signatures
 #' @export
-plot_holobiont_components <- function(components_df, env = NULL) {
+plot_holobiont_components <- function(components_df, env = NULL, labels = NULL, color_by = NULL) {
   library(ggplot2)
 
-  # components_df must be a data frame where columns are components
   comp_names <- colnames(components_df)
 
   # PCA overview
   pc <- prcomp(components_df, scale. = TRUE)
   pc_df <- data.frame(PC1 = pc$x[,1], PC2 = pc$x[,2])
 
-  p1 <- ggplot(pc_df, aes(PC1, PC2)) +
-    geom_point(alpha = 0.6) +
-    theme_bw() +
-    labs(title = "Holobiont Component PCA")
+  # Add labels if provided
+  if (!is.null(labels)) {
+    pc_df$label <- labels
+  } else {
+    pc_df$label <- rownames(components_df)
+  }
+
+  # Add color grouping if provided
+  if (!is.null(color_by)) {
+    pc_df$group <- color_by
+    p1 <- ggplot(pc_df, aes(PC1, PC2, color = group, label = label)) +
+      geom_point(alpha = 0.6, size = 2) +
+      geom_text(size = 2.5, hjust = -0.1, vjust = 0.5, show.legend = FALSE) +
+      theme_bw() +
+      labs(title = "Holobiont Component PCA", color = "Group")
+  } else {
+    p1 <- ggplot(pc_df, aes(PC1, PC2, label = label)) +
+      geom_point(alpha = 0.6, size = 2) +
+      geom_text(size = 2.5, hjust = -0.1, vjust = 0.5) +
+      theme_bw() +
+      labs(title = "Holobiont Component PCA")
+  }
 
   # Component correlation heatmap
   corr <- stats::cor(components_df)
   corr_df <- as.data.frame(as.table(corr))
   colnames(corr_df) <- c("Var1","Var2","value")
-
   p2 <- ggplot(corr_df, aes(Var1, Var2, fill = value)) +
     geom_tile() +
     scale_fill_gradient2() +
@@ -107,20 +123,16 @@ plot_holobiont_components <- function(components_df, env = NULL) {
   if (!is.null(env)) {
     env_df <- as.data.frame(env)
     names(env_df) <- colnames(env)
-
     env_cor <- cor(env_df, components_df)
     env_cor_df <- as.data.frame(as.table(env_cor))
     colnames(env_cor_df) <- c("Environment","Component","Correlation")
-
     p3 <- ggplot(env_cor_df, aes(Environment, Component, fill = Correlation)) +
       geom_tile() +
       scale_fill_gradient2() +
       theme_bw() +
       labs(title = "Env–Holobiont Correlation Matrix")
-
     return(list(PCA = p1, CorMatrix = p2, EnvEffects = p3))
   }
-
   return(list(PCA = p1, CorMatrix = p2))
 }
 
