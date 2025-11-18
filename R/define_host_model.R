@@ -40,7 +40,7 @@
 #' @param fst Optional numeric. Target Fst between populations. Stored
 #'   as metadata for now; the mapping from Fst to coalescent parameters
 #'   can be implemented later.
-#' @param var_host Numeric in [0, 1]. Proportion of variance in the
+#' @param var_host Numeric in between 0 and 1. Proportion of variance in the
 #'   holobiont/phenotypic response that is expected to be explained
 #'   by host genotype (based on literature or pilot data). This is
 #'   used later when you simulate the holobiont response.

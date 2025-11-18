@@ -18,7 +18,7 @@
 #' @param n_individuals Integer. Number of host individuals (diploid)
 #'   to simulate.
 #' @param n_loci Integer. Number of independent SNP loci to simulate.
-#' @param maf_threshold Optional numeric in [0, 0.5]. If provided,
+#' @param maf_threshold Optional numeric between 0 and 0.5. If provided,
 #'   SNPs with minor allele frequency below this threshold are
 #'   filtered out.
 #' @param seed Optional integer. If provided, used to set the random

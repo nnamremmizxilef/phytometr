@@ -37,7 +37,7 @@
 #' @param components Named list describing each holobiont component.
 #'   Each element should be a list with at least:
 #'   \itemize{
-#'     \item \code{r2_env}: numeric vector in [0, 1], either:
+#'     \item \code{r2_env}: numeric vector between 0 and 1, either:
 #'       \itemize{
 #'         \item length 1: total R² for this component explained by
 #'               \emph{all} environmental variables together, or
@@ -57,7 +57,7 @@
 #' @param n_replicates Integer. Number of simulation replicates per
 #'   design. Larger values give more precise power estimates but are
 #'   slower.
-#' @param alpha Numeric in (0, 1). Significance threshold.
+#' @param alpha Numeric between 0 and 1. Significance threshold.
 #' @param seed Optional integer. Base seed. Different designs and
 #'   replicates will use offsets of this seed to keep simulations
 #'   reproducible but distinct.

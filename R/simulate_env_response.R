@@ -22,10 +22,10 @@
 #'   }
 #' @param r2_env Either:
 #'   \itemize{
-#'     \item a single numeric in [0, 1]: total proportion of response
+#'     \item a single numeric between 0 and 1: total proportion of response
 #'           variance explained by all environmental variables together
 #'           (shared equally across columns), or
-#'     \item a numeric vector in [0, 1] of length equal to \code{ncol(env)},
+#'     \item a numeric vector between 0 and 1 of length equal to \code{ncol(env)},
 #'           optionally named to match \code{colnames(env)}, giving the
 #'           variance contribution of each environmental variable.
 #'   }

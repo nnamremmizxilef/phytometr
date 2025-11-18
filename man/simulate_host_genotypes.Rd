@@ -21,7 +21,7 @@ to simulate.}
 
 \item{n_loci}{Integer. Number of independent SNP loci to simulate.}
 
-\item{maf_threshold}{Optional numeric in \link{0, 0.5}. If provided,
+\item{maf_threshold}{Optional numeric between 0 and 0.5. If provided,
 SNPs with minor allele frequency below this threshold are
 filtered out.}
 
