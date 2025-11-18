@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate_holobiont_power.R
 \name{simulate_holobiont_power}
 \alias{simulate_holobiont_power}
-\title{Power analysis for holobiont responses to environment}
+\title{Simulate power for detecting env–holobiont effects}
 \usage{
 simulate_holobiont_power(
   env_space,
@@ -10,157 +10,67 @@ simulate_holobiont_power(
   components,
   n_groups_use,
   n_per_group,
-  n_replicates = 200,
-  alpha = 0.05,
-  seed = NULL,
-  verbose = TRUE
+  n_replicates = 100,
+  alpha = 0.05
 )
 }
 \arguments{
-\item{env_space}{Object of class \code{"env_space"} created by
-\code{define_env_space()}.}
+\item{env_space}{An object created by \code{define_env_space()}.}
 
-\item{host_model}{Object of class \code{"host_model"} created by
-\code{define_host_model()}.}
+\item{host_model}{Host model object from \code{define_host_model()}.
+(Currently included for API consistency; host variance is not yet
+simulated.)}
 
-\item{components}{Named list describing each holobiont component.
-Each element should be a list with at least:
-\itemize{
-\item \code{r2_env}: numeric vector between 0 and 1, either:
-\itemize{
-\item length 1: total R² for this component explained by
-\emph{all} environmental variables together, or
-\item length = number of environmental variables: per-variable
-R² contributions, whose sum is the total environmental
-R² for this component.
-}
-}
-The sum of \code{r2_env} plus \code{host_model$var_host} must be
-<= 1. The remaining variance is residual.}
+\item{components}{A named list describing holobiont components and their
+environment-driven R², exactly as used in
+\code{simulate_holobiont_components()}.}
 
-\item{n_groups_use}{Integer vector. Candidate numbers of groups
-(sites/conditions) to use from \code{env_space}. For each value,
-groups are chosen evenly across the gradient.}
+\item{n_groups_use}{Integer vector with candidate numbers of groups/sites
+to sample from \code{env_space}.}
 
-\item{n_per_group}{Integer vector. Candidate numbers of individuals
-per group. The function evaluates the Cartesian product of
-\code{n_groups_use} and \code{n_per_group}.}
+\item{n_per_group}{Integer vector with candidate numbers of individuals
+per group.}
 
-\item{n_replicates}{Integer. Number of simulation replicates per
-design. Larger values give more precise power estimates but are
-slower.}
+\item{n_replicates}{Number of simulation replicates per design.}
 
-\item{alpha}{Numeric between 0 and 1. Significance threshold.}
-
-\item{seed}{Optional integer. Base seed. Different designs and
-replicates will use offsets of this seed to keep simulations
-reproducible but distinct.}
-
-\item{verbose}{Logical. If TRUE, print progress messages.}
+\item{alpha}{Significance level for detecting any environmental effect.}
 }
 \value{
-A data.frame with one row per design and component, and
-columns:
+A data.frame with one row per design and columns:
 \itemize{
-\item \code{component}: name of the holobiont component.
-\item \code{n_groups}: number of groups used.
-\item \code{n_per_group}: individuals per group.
-\item \code{N_total}: total sample size.
-\item \code{env_r2_total}: total env R² for this component
-(sum of \code{r2_env}).
-\item \code{var_host}: host variance fraction.
-\item \code{power_env}: estimated power to detect an environmental
-effect (joint F-test of all env variables).
+\item \code{n_groups}, \code{n_per_group}, \code{N} – design size,
+\item \code{power_env} – mean power across components,
+\item one column per component with its individual power.
 }
+The object is given class \code{"holobiont_power"}.
 }
 \description{
-This function performs Monte Carlo power analysis for detecting
-environmental effects on holobiont responses (whole holobiont or
-components), given:
-\itemize{
-\item a multivariate environmental space (\code{env_space}),
-\item a host model (clone vs natural; \code{host_model}),
-\item one or more holobiont components with literature-based
-environmental effect sizes (\code{components}),
-\item a sampling design: number of groups (sites/conditions)
-and individuals per group.
-}
+This function explores how design choices (number of groups/sites and
+individuals per group) affect the power to detect environmental effects
+on holobiont components.
 }
 \details{
-For each design, the function:
-\enumerate{
-\item simulates individual-level environment from \code{env_space},
-\item constructs a response for each component:
-\eqn{Y = Y_\mathrm{env} + Y_\mathrm{host} + \epsilon},
-\item fits a linear model \code{Y ~ env_1 + ... + env_p},
-\item tests the environmental block using an F-test,
-\item estimates power as the proportion of simulations with
-p-value < \code{alpha}.
-}
-
-Host structure is taken into account via \code{host_model$var_host}:
+It uses three main ingredients:
 \itemize{
-\item for \code{type = "clone"}, \code{var_host = 0} (no host variance),
-\item for \code{type = "natural"}, \code{var_host > 0} adds extra
-between-individual variation, reducing power for the same N.
-}
-}
-\examples{
-\dontrun{
-# 1) Define environment
-env_space <- define_env_space(
-  context   = "field",
-  variables = list(
-    temperature = list(
-      range           = c(15, 25),
-      shape           = "linear",
-      target_sd       = 1,
-      within_group_sd = 0.5
-    ),
-    moisture = list(
-      range           = c(0.2, 0.6),
-      shape           = "random",
-      target_sd       = 0.05,
-      within_group_sd = 0.1
-    )
-  ),
-  n_groups = 6,
-  seed     = 123
-)
-
-# 2) Host model: natural population with 20\% host-driven variance
-host_nat <- define_host_model(
-  type              = "natural",
-  pop_structure     = "panmictic",
-  mutation_rate     = 1,
-  recombination_rate = 0,
-  var_host          = 0.2
-)
-
-# 3) Holobiont components with env effect sizes
-components <- list(
-  root_bacteria = list(
-    r2_env = c(temperature = 0.25, moisture = 0.05)  # 30\% total
-  ),
-  root_fungi = list(
-    r2_env = c(temperature = 0.15, moisture = 0.05)  # 20\% total
-  )
-)
-
-# 4) Power analysis across designs
-power_res <- simulate_holobiont_power(
-  env_space    = env_space,
-  host_model   = host_nat,
-  components   = components,
-  n_groups_use = c(3, 6),
-  n_per_group  = c(10, 20),
-  n_replicates = 200,
-  alpha        = 0.05,
-  seed         = 42,
-  verbose      = TRUE
-)
-
-power_res
+\item an \code{env_space} object from \code{define_env_space()},
+\item a \code{host_model} from \code{define_host_model()} (currently
+only used to distinguish clone vs natural; host variance is not
+yet simulated),
+\item a component specification list (the same structure you pass to
+\code{simulate_holobiont_components()}).
 }
 
+For each combination of \code{n_groups_use} and \code{n_per_group}, the
+function:
+\enumerate{
+\item Simulates individual-level environmental values around the group
+means in \code{env_space}, using the within-group SDs stored there.
+\item Simulates holobiont component values from the specified R²
+relationships using \code{simulate_holobiont_components()}.
+\item Fits simple linear models of each component on all environmental
+variables, and records whether at least one environmental
+coefficient is significant at \code{alpha}.
+\item Estimates power for each component as the fraction of replicates
+with at least one significant environmental effect.
+}
 }
