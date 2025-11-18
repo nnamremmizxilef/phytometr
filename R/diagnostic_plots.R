@@ -25,7 +25,7 @@ plot_env_space <- function(env_space) {
   ggplot2::ggplot(df_long, ggplot2::aes(
     x = group_id, y = value, color = variable, group = variable
   )) +
-    ggplot2::geom_line(size = 1.2) +
+    ggplot2::geom_line(linewidth = 1.2) +
     ggplot2::geom_point(size = 3) +
     ggplot2::labs(
       title = "Realised Environmental Space",
