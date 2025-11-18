@@ -10,7 +10,7 @@ plot_env_space(env_space)
 \item{env_space}{An object created by define_env_space().}
 }
 \value{
-A ggplot showing planned vs realised environmental gradients.
+A ggplot object showing planned vs realised environmental gradients.
 }
 \description{
 Plot environmental space

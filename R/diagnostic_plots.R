@@ -7,7 +7,7 @@
 #'
 #' @param env_space An object created by define_env_space().
 #'
-#' @return A ggplot showing planned vs realised environmental gradients.
+#' @return A ggplot object showing planned vs realised environmental gradients.
 #' @export
 plot_env_space <- function(env_space) {
 
@@ -22,17 +22,18 @@ plot_env_space <- function(env_space) {
   df_long <- reshape2::melt(df, id.vars = "group_id",
                             measure.vars = vars)
 
-  ggplot(df_long, aes(x = group_id, y = value,
-                      color = variable, group = variable)) +
-    geom_line(size = 1.2) +
-    geom_point(size = 3) +
-    labs(
+  ggplot2::ggplot(df_long, ggplot2::aes(
+    x = group_id, y = value, color = variable, group = variable
+  )) +
+    ggplot2::geom_line(size = 1.2) +
+    ggplot2::geom_point(size = 3) +
+    ggplot2::labs(
       title = "Realised Environmental Space",
       x = "Group / Site",
       y = "Environmental Value",
       color = "Variable"
     ) +
-    theme_minimal(base_size = 14)
+    ggplot2::theme_minimal(base_size = 14)
 }
 
 #' Plot individual-level environmental distributions
