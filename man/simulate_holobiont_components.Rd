@@ -2,76 +2,35 @@
 % Please edit documentation in R/simulate_holobiont_components.R
 \name{simulate_holobiont_components}
 \alias{simulate_holobiont_components}
-\title{Simulate a holobiont response driven by one or more environmental variables}
+\title{Simulate holobiont components from environmental predictors}
 \usage{
 simulate_holobiont_components(components, env_data)
 }
 \arguments{
-\item{env}{Numeric vector, matrix, or data.frame of environmental
-variables. Each column is a predictor (e.g. temperature, water).
-\itemize{
-\item A numeric vector means a single predictor.
-\item A matrix/data.frame means multiple predictors.
-}}
+\item{components}{A named list. Each entry defines one holobiont component
+and must contain an element \code{r2_env}, which is a named numeric vector
+giving the (approximate) variance contribution of each environmental
+variable. For example:
+\preformatted{
+  components = list(
+    root_bacteria = list(r2_env = c(temperature = 0.30)),
+    root_fungi    = list(r2_env = c(temperature = 0.25, moisture = 0.10))
+  )
+  }
+The sum of \code{r2_env} values is treated as the total R² of environment
+for that component; if it exceeds 1, it is truncated with a warning.}
 
-\item{r2_env}{Either:
-\itemize{
-\item a single numeric in \link{0, 1}: total proportion of response
-variance explained by all environmental variables together
-(shared equally across columns), or
-\item a numeric vector in \link{0, 1} of length equal to \code{ncol(env)},
-optionally named to match \code{colnames(env)}, giving the
-variance contribution of each environmental variable.
-}
-For example, if \code{env} has columns \code{temp} and \code{water},
-you can use \code{r2_env = c(temp = 0.3, water = 0.1)}.}
-
-\item{total_var}{Numeric > 0. Total variance of the simulated response.
-Default is 1. The environmental and residual components are scaled
-so that their variances sum to \code{total_var}.}
-
-\item{seed}{Optional integer. If provided, used to set the random seed
-for reproducibility.}
+\item{env_data}{A data frame or matrix with one row per individual (or group)
+and one column per environmental variable (e.g. \code{temperature},
+\code{moisture}).}
 }
 \value{
-Numeric vector of length \code{length(env)} (if \code{env} is
-a vector) or \code{nrow(env)} (if \code{env} is a matrix/data.frame),
-representing the simulated holobiont response.
+A data frame with one row per row in \code{env_data}, an \code{id}
+column, and one column per holobiont component. Values are on a latent
+standardised scale (mean ≈ 0, variance ≈ 1) unless rescaled later.
 }
 \description{
-This function simulates a single univariate holobiont response
-(e.g. microbial diversity, community PC1, trait value) such that
-a specified proportion of its variance is explained by one or
-several environmental variables.
-}
-\details{
-Typical use cases:
-\itemize{
-\item "Temperature explains ~30\% of variation in root bacterial diversity"
-\item "Temperature explains 20\% and water availability 10\% of fungal richness"
-}
-Given an environmental design and literature-based R^2 values,
-the function returns a simulated response vector with that
-approximate variance structure.
-}
-\examples{
-# Single environmental variable: temperature
-set.seed(1)
-temp <- seq(10, 20, length.out = 100)
-resp <- simulate_env_response(temp, r2_env = 0.3)
-summary(lm(resp ~ temp))$r.squared  # roughly ~0.3
-
-# Two variables: temperature and water
-set.seed(1)
-n <- 120
-temp  <- seq(15, 25, length.out = n)
-water <- seq(0.3, 0.9, length.out = n)
-env <- cbind(temp = temp, water = water)
-
-resp2 <- simulate_env_response(
-  env    = env,
-  r2_env = c(temp = 0.2, water = 0.1)  # ~30\% total explained by env
-)
-summary(lm(resp2 ~ temp + water))$r.squared
-
+This function takes a specification of how strongly different environmental
+variables affect each holobiont component (in terms of R²) and simulates
+component values accordingly.
 }
