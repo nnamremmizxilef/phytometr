@@ -1,142 +1,95 @@
-#' Simulate individual-level environmental values from an env_space
+#' Simulate individual-level environmental values
 #'
-#' Given an \code{env_space} object (created by \code{define_env_space()}),
-#' this function simulates individual-level environmental values by
-#' drawing around the realised group means with the specified
-#' within-group standard deviations.
+#' Given an `env_space` object (from `define_env_space()`,
+#' `define_env_space_grid()`, or `define_env_locations()`), generate
+#' individual-level environmental conditions by adding within-group
+#' noise around the group means.
 #'
-#' This is the bridge between:
-#' \itemize{
-#'   \item environmental design (\code{env_space}: which sites/conditions
-#'         are possible), and
-#'   \item individual-level simulations (power analysis, holobiont responses).
-#' }
+#' @param env_space An object of class `env_space`.
+#' @param n_per_group Integer. Either a single number (same N for all
+#'   groups) or a vector of length `env_space$n_groups` giving the
+#'   number of individuals per group.
 #'
-#' @param env_space Object of class \code{"env_space"} created by
-#'   \code{define_env_space()}.
-#' @param n_per_group Integer or integer vector. Number of individuals
-#'   per selected group. If a single integer, it is recycled for all
-#'   groups. If a vector, its length must equal the number of groups.
-#' @param groups Optional vector of group IDs to use (a subset of
-#'   \code{env_space$planned$group_id}). If \code{NULL} (default), all
-#'   groups in \code{env_space} are used.
-#' @param seed Optional integer. If provided, used to set the random
-#'   seed for reproducibility.
-#'
-#' @return A data.frame with one row per simulated individual and
-#'   columns:
-#'   \itemize{
-#'     \item \code{group_id}: site/condition index.
-#'     \item one column per environmental variable (same names as in
-#'           \code{env_space$variables}).
-#'   }
-#'
-#' @examples
-#' \dontrun{
-#' env_space <- define_env_space(
-#'   context   = "field",
-#'   variables = list(
-#'     temperature = list(
-#'       range           = c(15, 25),
-#'       shape           = "linear",
-#'       target_sd       = 1,
-#'       within_group_sd = 0.5
-#'     ),
-#'     moisture = list(
-#'       range           = c(0.2, 0.6),
-#'       shape           = "random",
-#'       target_sd       = 0.05,
-#'       within_group_sd = 0.1
-#'     )
-#'   ),
-#'   n_groups = 6,
-#'   seed     = 123
-#' )
-#'
-#' ind_env <- simulate_individual_env(env_space, n_per_group = 10)
-#' head(ind_env)
-#' }
-#'
+#' @return A data frame with columns
+#'   `group_id` and one column per environmental variable.
 #' @export
-simulate_individual_env <- function(
-  env_space,
-  n_per_group,
-  groups = NULL,
-  seed = NULL
-) {
+simulate_individual_env <- function(env_space, n_per_group) {
+
   if (!inherits(env_space, "env_space")) {
-    stop("'env_space' must be an object created by define_env_space().")
+    stop("`env_space` must be an object of class 'env_space'.")
   }
 
-  # Select groups
-  all_groups <- env_space$planned$group_id
-  if (is.null(groups)) {
-    groups <- all_groups
-  } else {
-    if (!all(groups %in% all_groups)) {
-      stop("Some 'groups' are not present in env_space$planned$group_id.")
-    }
-  }
-  groups <- as.integer(groups)
-  n_groups <- length(groups)
-
-  # Handle n_per_group
-  if (length(n_per_group) == 1L) {
-    n_per_group <- rep(as.integer(n_per_group), n_groups)
-  } else {
-    if (length(n_per_group) != n_groups) {
-      stop("'n_per_group' must be a single integer or have length equal to length(groups).")
-    }
-    n_per_group <- as.integer(n_per_group)
-  }
-  if (any(n_per_group < 1)) {
-    stop("All entries in 'n_per_group' must be >= 1.")
-  }
-
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
-
-  var_names <- env_space$variables
   realised  <- env_space$realised
+  variables <- env_space$variables
+  n_groups  <- env_space$n_groups
   within_sd <- env_space$within_group_sd
 
-  # Prepare output container
-  total_n <- sum(n_per_group)
-  out <- data.frame(
-    group_id = integer(total_n),
-    matrix(NA_real_, nrow = total_n, ncol = length(var_names))
-  )
-  colnames(out)[-1] <- var_names
-
-  row_index <- 1L
-
-  for (i in seq_along(groups)) {
-    g      <- groups[i]
-    ng     <- n_per_group[i]
-    g_row  <- realised[realised$group_id == g, , drop = FALSE]
-
-    if (nrow(g_row) != 1L) {
-      stop("Internal error: multiple rows for group_id ", g, " in env_space$realised.")
-    }
-
-    # For each variable, simulate NG values around realised mean
-    for (v in var_names) {
-      mu <- g_row[[v]]
-      sd <- within_sd[[v]]
-      if (is.null(sd) || is.na(sd)) {
-        sd <- 0
-      }
-      out[row_index:(row_index + ng - 1), v] <- if (sd > 0) {
-        stats::rnorm(ng, mean = mu, sd = sd)
-      } else {
-        rep(mu, ng)
-      }
-    }
-
-    out$group_id[row_index:(row_index + ng - 1)] <- g
-    row_index <- row_index + ng
+  if (!("group_id" %in% names(realised))) {
+    stop("`env_space$realised` must contain a 'group_id' column.")
   }
 
-  return(out)
+  # allow single n_per_group or per-group vector
+  if (length(n_per_group) == 1L) {
+    n_per_group <- rep(n_per_group, n_groups)
+  } else if (length(n_per_group) != n_groups) {
+    stop("`n_per_group` must be length 1 or length env_space$n_groups (",
+         n_groups, ").")
+  }
+
+  # sanity checks
+  if (!all(variables %in% names(realised))) {
+    missing <- setdiff(variables, names(realised))
+    stop("The following variables listed in env_space$variables ",
+         "are missing from env_space$realised: ",
+         paste(missing, collapse = ", "))
+  }
+
+  if (length(within_sd) == 1L) {
+    within_sd <- rep(within_sd, length(variables))
+    names(within_sd) <- variables
+  }
+
+  if (!all(variables %in% names(within_sd))) {
+    missing <- setdiff(variables, names(within_sd))
+    stop("within_group_sd must have entries for all variables. Missing: ",
+         paste(missing, collapse = ", "))
+  }
+
+  # we keep group labels as they are (numeric, character, factor)
+  group_labels <- realised$group_id
+
+  if (length(group_labels) != n_groups) {
+    stop("Internal error: length(group_labels) != env_space$n_groups.")
+  }
+
+  out_list <- vector("list", n_groups)
+
+  for (i in seq_len(n_groups)) {
+    g_label <- group_labels[i]
+
+    # exactly one row per group_id in realised
+    row_i <- realised[i, , drop = FALSE]
+
+    n_i <- n_per_group[i]
+
+    # simulate env variables for individuals in group i
+    sim_env <- lapply(variables, function(v) {
+      mu <- row_i[[v]]
+      sd <- within_sd[[v]]
+      stats::rnorm(n_i, mean = mu, sd = sd)
+    })
+
+    sim_df <- as.data.frame(sim_env)
+    names(sim_df) <- variables
+
+    sim_df$group_id <- rep(g_label, n_i)
+    # put group_id first
+    sim_df <- sim_df[, c("group_id", variables), drop = FALSE]
+
+    out_list[[i]] <- sim_df
+  }
+
+  out <- do.call(rbind, out_list)
+  rownames(out) <- NULL
+  out
 }
