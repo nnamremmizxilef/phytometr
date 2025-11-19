@@ -43,6 +43,7 @@ Suggests:
     coala (>= 0.7.0),
     LEA,
     irlba,
+    patchwork,
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
