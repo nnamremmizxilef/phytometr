@@ -2,72 +2,24 @@
 % Please edit documentation in R/simulate_individual_env.R
 \name{simulate_individual_env}
 \alias{simulate_individual_env}
-\title{Simulate individual-level environmental values from an env_space}
+\title{Simulate individual-level environmental values}
 \usage{
-simulate_individual_env(env_space, n_per_group, groups = NULL, seed = NULL)
+simulate_individual_env(env_space, n_per_group)
 }
 \arguments{
-\item{env_space}{Object of class \code{"env_space"} created by
-\code{define_env_space()}.}
+\item{env_space}{An object of class \code{env_space}.}
 
-\item{n_per_group}{Integer or integer vector. Number of individuals
-per selected group. If a single integer, it is recycled for all
-groups. If a vector, its length must equal the number of groups.}
-
-\item{groups}{Optional vector of group IDs to use (a subset of
-\code{env_space$planned$group_id}). If \code{NULL} (default), all
-groups in \code{env_space} are used.}
-
-\item{seed}{Optional integer. If provided, used to set the random
-seed for reproducibility.}
+\item{n_per_group}{Integer. Either a single number (same N for all
+groups) or a vector of length \code{env_space$n_groups} giving the
+number of individuals per group.}
 }
 \value{
-A data.frame with one row per simulated individual and
-columns:
-\itemize{
-\item \code{group_id}: site/condition index.
-\item one column per environmental variable (same names as in
-\code{env_space$variables}).
-}
+A data frame with columns
+\code{group_id} and one column per environmental variable.
 }
 \description{
-Given an \code{env_space} object (created by \code{define_env_space()}),
-this function simulates individual-level environmental values by
-drawing around the realised group means with the specified
-within-group standard deviations.
-}
-\details{
-This is the bridge between:
-\itemize{
-\item environmental design (\code{env_space}: which sites/conditions
-are possible), and
-\item individual-level simulations (power analysis, holobiont responses).
-}
-}
-\examples{
-\dontrun{
-env_space <- define_env_space(
-  context   = "field",
-  variables = list(
-    temperature = list(
-      range           = c(15, 25),
-      shape           = "linear",
-      target_sd       = 1,
-      within_group_sd = 0.5
-    ),
-    moisture = list(
-      range           = c(0.2, 0.6),
-      shape           = "random",
-      target_sd       = 0.05,
-      within_group_sd = 0.1
-    )
-  ),
-  n_groups = 6,
-  seed     = 123
-)
-
-ind_env <- simulate_individual_env(env_space, n_per_group = 10)
-head(ind_env)
-}
-
+Given an \code{env_space} object (from \code{define_env_space()},
+\code{define_env_space_grid()}, or \code{define_env_locations()}), generate
+individual-level environmental conditions by adding within-group
+noise around the group means.
 }
