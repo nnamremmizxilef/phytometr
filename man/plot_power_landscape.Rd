@@ -2,17 +2,22 @@
 % Please edit documentation in R/plot_power_landscape.R
 \name{plot_power_landscape}
 \alias{plot_power_landscape}
-\title{Plot power landscape over design choices}
+\title{Plot power landscape over design grid}
 \usage{
 plot_power_landscape(power_results)
 }
 \arguments{
-\item{power_results}{Data frame with at least columns
-\code{n_groups}, \code{n_per_group}, and \code{power_env}.}
+\item{power_results}{Data frame returned by simulate_holobiont_power().
+Must contain columns \code{n_groups}, \code{n_per_group}, and
+\code{power_env}.}
 }
 \value{
 A ggplot object.
 }
 \description{
-Plot power landscape over design choices
+Heatmap of detection power over the design grid
+(number of groups × individuals per group). By default it
+shows \emph{all} design combinations that were requested in
+\code{simulate_holobiont_power()}, even if some of them
+were not successfully simulated.
 }
