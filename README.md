@@ -13,13 +13,13 @@
 
 The package supports both:
 
-## Phase 1 — **Clonal host systems (common garden / controlled experiments)**
+## Application 1 — **Clonal host systems (common garden / controlled experiments)**
 - Negligible host genetic variation  
 - Environmental variation drives holobiont response  
 - Goal: Determine **number of conditions and replicates** needed  
 - Examples: tree clones, grafted plants, model systems  
 
-## Phase 2 — **Natural host populations**
+## Application 2 — **Natural host populations**
 - Includes realistic host genomic variation  
 - Optional population structure (panmictic, IBD, discrete, admixture)  
 - Environment + host + G×E effects  
