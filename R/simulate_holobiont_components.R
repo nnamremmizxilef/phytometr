@@ -11,7 +11,7 @@
 #'
 #' @return A data frame with:
 #'   \itemize{
-#'     \item \code{id} – row index (1..n),
+#'     \item \code{id} - row index (1..n),
 #'     \item optional \code{group_id} (if present in \code{env_data}),
 #'     \item one column per holobiont component.
 #'   }
@@ -63,12 +63,12 @@ simulate_holobiont_components <- function(components, env_data) {
     # Extract and standardise relevant env variables
     env_sub <- scale(env_data[, names(r2_vec), drop = FALSE])
 
-    # Total R² explained by all env variables together
+    # Total R2 explained by all env variables together
     total_r2 <- sum(r2_vec)
     if (total_r2 <= 0) {
       warning(
         sprintf(
-          "Component '%s' has non-positive total R² (sum(r2_env) = %g); using noise only.",
+          "Component '%s' has non-positive total R2 (sum(r2_env) = %g); using noise only.",
           comp_name, total_r2
         )
       )
@@ -78,7 +78,7 @@ simulate_holobiont_components <- function(components, env_data) {
     if (total_r2 >= 1) {
       warning(
         sprintf(
-          "Component '%s' has total R² >= 1 (sum(r2_env) = %g); truncating to 0.99.",
+          "Component '%s' has total R2 >= 1 (sum(r2_env) = %g); truncating to 0.99.",
           comp_name, total_r2
         )
       )
@@ -94,7 +94,7 @@ simulate_holobiont_components <- function(components, env_data) {
     # Independent noise
     epsilon <- stats::rnorm(n)
 
-    # Construct response: cor(env_score, Y)^2 ≈ total_r2
+    # Construct response: cor(env_score, Y)^2 ~ total_r2
     y_latent <- sqrt(total_r2) * env_score + sqrt(1 - total_r2) * epsilon
 
     res[[comp_name]] <- y_latent

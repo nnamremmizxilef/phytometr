@@ -16,11 +16,11 @@
 \item{which}{Character, which plot(s) to show:
 \itemize{
 \item \code{"overview"} (default): 2x2 layout with env-space, PCA,
-component correlation and env–holobiont correlation.
+component correlation and environment-holobiont correlation.
 \item \code{"env"}: environmental space plot.
 \item \code{"pca"}: PCA of holobiont components.
 \item \code{"components"}: holobiont component correlation heatmap.
-\item \code{"env_effects"}: env–holobiont correlation heatmap.
+\item \code{"env_effects"}: environment-holobiont correlation heatmap.
 \item \code{"variance"}: variance decomposition barplot (if present).
 }}
 

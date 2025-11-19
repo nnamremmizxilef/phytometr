@@ -4,7 +4,7 @@
 #'   Must contain an `id` column; may contain `group_id`.
 #' @param env Optional environmental data (data frame or matrix) with the
 #'   same number of rows as `components_df`. Used to compute
-#'   env–component correlations.
+#'   environment-component correlations.
 #' @param labels Optional vector of labels for points in the PCA plot.
 #'   Defaults to `components_df$id`.
 #' @param color_by Optional column name in `components_df` or vector
@@ -51,7 +51,7 @@ plot_holobiont_components <- function(components_df,
     scores$label <- labels
   }
 
-  # colours → always discrete factor
+  # colours (always discrete factor)
   if (is.null(color_by) && "group_id" %in% names(components_df)) {
 
     scores$group <- factor(components_df$group_id)
@@ -99,7 +99,7 @@ plot_holobiont_components <- function(components_df,
     ggplot2::theme_minimal(base_size = 14)
 
   ## ---------------------------------------------------------------
-  ## 2) Component–component correlation heatmap (with r & p)
+  ## 2) Component-component correlation heatmap (with r & p)
   ## ---------------------------------------------------------------
 
   cor_mat <- stats::cor(comp_only, use = "pairwise.complete.obs")
@@ -162,7 +162,7 @@ plot_holobiont_components <- function(components_df,
   out <- list(PCA = p_pca, CorMatrix = p_cor)
 
   ## ---------------------------------------------------------------
-  ## 3) Env–component correlation heatmap (with r & p)
+  ## 3) Environment-component correlation heatmap (with r & p)
   ## ---------------------------------------------------------------
 
   if (!is.null(env)) {
@@ -223,7 +223,7 @@ plot_holobiont_components <- function(components_df,
         size = 3
       ) +
       ggplot2::labs(
-        title = "Env–Holobiont Correlation Matrix",
+        title = "Environment-Holobiont Correlation Matrix",
         x     = NULL,
         y     = NULL
       ) +

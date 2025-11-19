@@ -7,19 +7,16 @@ Authors@R:
            role = c("aut", "cre"),
            comment = c(ORCID = "0009-0002-0762-2454"))
 Description: 
-    phytometr provides a unified framework for simulating environmental gradients, 
-    host systems (clonal or genetically structured), and holobiont responses such as 
-    microbiome diversity, composition, or abundance. The package enables statistically 
-    grounded power analysis for experimental design in both field gradients and controlled 
-    experiments. Users can model how much environmental variation, replication, and sample 
-    size are required to detect environmental effects, host effects, or interactions 
-    on holobiont components. 
-    The framework supports: (1) clonal systems where host genetic variation is negligible, 
-    (2) natural populations with user-defined host genetic structure, and 
-    (3) flexible literature-based parameterization of holobiont response sensitivity to 
-    environmental drivers. 
-    A second development phase will extend the framework to full genotype–environment 
-    association (GEA) simulations using coalescent-based host genetic data.
+    A simulation framework for designing and evaluating experiments on 
+    host–environment–holobiont systems. The package provides tools for defining 
+    environmental gradients, modelling clonal or natural host systems, and 
+    simulating holobiont responses (e.g., diversity, abundance, composition). 
+    Users can perform statistically grounded power analyses to determine the 
+    environmental variation and replication required to detect environmental, 
+    host, or interaction effects on holobiont components. A flexible 
+    literature-based parameterisation allows modelling component sensitivity 
+    to environmental drivers. A later development phase will extend the framework 
+    to full genotype–environment association simulations using coalescent models.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -30,16 +27,16 @@ Depends:
     R (>= 4.0.0)
 Imports:
     ggplot2 (>= 3.4.0),
-    MASS,
+    reshape2,
+    tidyr,
+    tidyselect,
+    stats
+Suggests:
+	MASS,
     parallel,
-    stats,
     utils,
     graphics,
     grDevices,
-    reshape2,
-    tidyr,
-    tidyselect
-Suggests:
     coala (>= 0.7.0),
     LEA,
     irlba,

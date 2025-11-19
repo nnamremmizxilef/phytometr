@@ -50,7 +50,7 @@ diagnose_holobiont_design <- function(env_space, components, host_model) {
   if ("group_id" %in% colnames(env_vals))
     env_vals <- env_vals[, !(colnames(env_vals) == "group_id")]
 
-  env_cor <- cor(env_vals)
+  env_cor <- stats::cor(env_vals)
   env_cor_df <- as.data.frame(env_cor)
 
   # Issue warnings for multicollinearity
@@ -69,21 +69,21 @@ diagnose_holobiont_design <- function(env_space, components, host_model) {
   )
 
   comp_vals <- holobiont_sim[, names(holobiont_sim) != "id"]
-  comp_cor <- cor(comp_vals)
+  comp_cor <- stats::cor(comp_vals)
 
   # ============================================================
   # 3. ENV → HOLOBIONT CORRELATION MATRIX
   # ============================================================
 
   env_indiv_only <- env_indiv[, !(colnames(env_indiv) == "id")]
-  env_comp_cor <- cor(env_indiv_only[, -1], # remove group id
+  env_comp_cor <- stats::cor(env_indiv_only[, -1], # remove group id
                       comp_vals[, -1])      # remove group id
 
   # ============================================================
   # 4. PCA DIAGNOSTICS
   # ============================================================
 
-  pca <- prcomp(comp_vals[, -1], scale. = TRUE)  # remove group id
+  pca <- stats::prcomp(comp_vals[, -1], scale. = TRUE)  # remove group id
 
   # ============================================================
   # 5. VARIANCE DECOMPOSITION EXPECTATIONS

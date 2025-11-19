@@ -1,0 +1,20 @@
+utils::globalVariables(c(
+  "value",
+  "group_id",
+  "variable",
+  "PC1",
+  "PC2",
+  "group",
+  "label",
+  "Var1",
+  "Var2",
+  "r",
+  "Environment",
+  "Component",
+  "x",
+  "y",
+  "n_groups",
+  "n_per_group",
+  "power_env",
+  "component"
+))

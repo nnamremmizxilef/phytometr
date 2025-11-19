@@ -20,7 +20,7 @@ that components can be grouped in plots.}
 \value{
 A data frame with:
 \itemize{
-\item \code{id} – row index (1..n),
+\item \code{id} - row index (1..n),
 \item optional \code{group_id} (if present in \code{env_data}),
 \item one column per holobiont component.
 }

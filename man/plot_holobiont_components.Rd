@@ -17,7 +17,7 @@ Must contain an \code{id} column; may contain \code{group_id}.}
 
 \item{env}{Optional environmental data (data frame or matrix) with the
 same number of rows as \code{components_df}. Used to compute
-env–component correlations.}
+environment-component correlations.}
 
 \item{labels}{Optional vector of labels for points in the PCA plot.
 Defaults to \code{components_df$id}.}

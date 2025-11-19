@@ -1,130 +1,79 @@
-# phytometR 0.0.0.9000
+# phytometr 0.0.0.9000
 
-## Initial Development Release — Core Framework for Host–Environment–Holobiont Simulation
+## Initial Development Release – Host–Environment–Holobiont Power Framework
 
-This is the very first development version of **phytometR**, introducing a unified framework
-to simulate environmental gradients, host variation, holobiont responses, and experimental
-power for both **clonal systems (Phase 1)** and **natural populations (Phase 2)**.
+This is the first functional prototype of **phytometr**, providing a complete 
+simulation and power-analysis system for clonal host experiments and 
+environmentally driven holobiont responses (Phase 1 of package development).
 
-The package is designed to support experimental planning in ecology, microbiome research,
-plant–microbe interactions, stress experiments, and host–holobiont biology.
+### New Core Features
 
----
+#### Environmental Simulation Framework
+* Added **three independent modes** for environmental definition:
+  - `define_env_space()` – gradient-based environmental ranges for experiments  
+  - `define_env_locations()` – user-specified site/condition definitions  
+  - `define_env_grid()` – grid of possible experimental conditions for factorial or multivariate setups  
+* All modes support:
+  - Environmental shapes (`linear`, `nonlinear`, `random`, `patchy`)  
+  - Realistic **within-group variability**  
+  - Environmental **precision control** via `target_sd`  
+* Added `simulate_individual_env()` to expand group-level environments to individual-level conditions.
 
-## Key Features Introduced
+#### Host Model Framework
+* Added `define_host_model()` with two modes:
+  - `"clone"` – no host genetic variance  
+  - `"natural"` – placeholder structure for Phase 2 (population genetics model)  
+* Stores host variance, population structure metadata, and simulation notes.
 
-### 1. Environmental Gradient Simulation
-**Functions:**
-- `define_env_gradient()`  
-- `simulate_environmental_conditions()`
+#### Holobiont Component Specification & Simulation
+* Added `simulate_holobiont_components()` to simulate:
+  - User-defined holobiont components (bacteria, fungi, herbivores, etc.)
+  - Environment-driven effect sizes (`r2_env`)
+  - Optional negative effects (e.g., stressors)
+  - Group-level component means and variability
+* Added `simulate_env_response()` to generate individual-level holobiont responses combining:
+  - Environmental effects  
+  - Host model variance  
+  - Residual variance  
 
-Supports:
-- continuous, categorical, or multivariate environmental variables  
-- spatial vs. controlled experimental gradients  
-- controllable environmental noise (field vs. greenhouse precision)  
-- user-defined environmental ranges based on literature or pilot data  
+#### Power Analysis Engine
+* Added `simulate_holobiont_power()`:
+  - Computes power across combinations of:
+    - Number of groups  
+    - Individuals per group  
+  - Automatically uses all defined groups in `env_space`, `env_locations`, or `env_grid`
+  - Estimates component-wise and overall environmental response power
+  - Returns tidy power table for downstream analysis
 
-This establishes the foundation for asking:
-> “How much environmental variation is needed to detect an effect?”
+### New Visualisation Suite
 
----
+#### Environmental Plots
+* `plot_env_space()` – planned vs. realised environmental gradients  
+* `plot_env_individual()` – individual-level environmental distributions  
 
-### 2. Host System Modeling (Clone vs. Natural Population)
-**Function:**
-- `define_host_model()`
+#### Holobiont Diagnostics
+* `plot_holobiont_components()` –  
+  - PCA of components (with group-based colouring and convex hulls)  
+  - Component correlation heatmap (Pearson r with p-values)  
+  - Environment–component correlation heatmap (Pearson r with p-values)
 
-Two modes:
-- **Clonal host system (Phase 1)**  
-  No genetic variation; all individuals share one genotype.
+#### Power & Variance Plots
+* `plot_power_landscape()` – heatmap of sample-size × group-number power  
+* `plot_variance_decomposition()` – variance partitioning for each holobiont component  
 
-- **Natural population (Phase 2)**  
-  With optional genetic variance and population structure:
-  - panmictic  
-  - isolation-by-distance  
-  - discrete populations  
-  - structured allele frequency variance  
+#### Design Diagnostics
+* `diagnose_phytomet_design()` – quick diagnostics summary  
+* `plot_phytomet_diagnostics()` – publication-ready diagnostic visualisation
 
-This enables experiments across the continuum from controlled clonal setups to landscape-level sampling.
+### Utility Improvements
+* Fully consistent ID + group tracking across all simulation steps  
+* Harmonised scaling of effect sizes  
+* Better defaults for gradient noise  
+* Standardised return objects (`env_space`, `host_model`, `holo_components`)  
+* Harmonised colour scales and aesthetics for all heatmaps
 
----
-
-### 3. Holobiont Component Simulation
-**Function:**
-- `simulate_holobiont_components()`
-
-Allows simulation of:
-- microbiome diversity  
-- microbial functional traits  
-- herbivore/pathogen load  
-- community composition proxies (e.g., PC1, richness, evenness)  
-
-Each component can have:
-- environmental effect size  
-- host genetic contribution  
-- environmental noise  
-- optional G×E interaction  
-
-Users can define as many components as needed, reflecting literature-based effect sizes.
-
----
-
-### 4. Experimental Power Simulation
-**Function:**
-- `simulate_power()` (initial version)
-
-Allows exploration of:
-- how sample size interacts with environmental differences  
-- trade-offs between replication, environmental range, and effect detectability  
-- differences between clonal vs. natural host systems  
-
-This is the core engine to support planning field trials or controlled experiments.
-
----
-
-### 5. Diagnostic Tools (Initial Version)
-**Function:**
-- `plot_diagnostics()`
-
-Provides visual summaries of:
-- environmental variance  
-- host genetic variance (if applicable)  
-- holobiont response distributions  
-- signal-to-noise structure  
-
-These diagnostics guide users toward realistic and statistically supported experimental designs.
-
----
-
-## Goals of This Release
-
-This initial version establishes the **foundation** for the package:
-
-- Simulation-first workflow  
-- Modular design (environment → host → holobiont → power)  
-- Flexible enough for any holobiont system  
-- Supports both field gradients and controlled experiments  
-- Prepares the package for later integration of:
-  - real data ingestion  
-  - more advanced power metrics  
-  - genetic coalescent simulations (Phase 2 extensions)
-
----
-
-## Functions Included in 0.0.0.9000
-
-| Category | Functions |
-|---------|-----------|
-| Environment simulation | `define_env_gradient()`, `simulate_environmental_conditions()` |
-| Host modeling | `define_host_model()` |
-| Holobiont responses | `simulate_holobiont_components()` |
-| Power analysis | `simulate_power()` |
-| Diagnostics | `plot_diagnostics()` |
-
----
-
-## Notes
-
-This is a development-stage release. API changes are expected before the first stable version.
+### Notes
+* API may change slightly as functionality stabilises.
 
 ---
 
