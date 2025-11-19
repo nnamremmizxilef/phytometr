@@ -2,29 +2,60 @@
 % Please edit documentation in R/simulate_holobiont_components.R
 \name{simulate_holobiont_components}
 \alias{simulate_holobiont_components}
-\title{Simulate holobiont components from environmental predictors}
+\title{Simulate holobiont components at the group level}
 \usage{
-simulate_holobiont_components(components, env_data)
+simulate_holobiont_components(components, env_data, total_var = 1)
 }
 \arguments{
-\item{components}{A named list. Each entry defines one holobiont component
-and must contain an element \code{r2_env}, which is a named numeric vector
-giving the (approximate) variance contribution of each environmental
-variable.}
+\item{components}{A named list of component specifications. Each
+entry must be a list with at least:
+\itemize{
+\item \code{r2_env}: named numeric vector of non-negative values
+giving the proportion of variance explained by each
+environmental variable (R² per variable). Names must match
+columns in \code{env_data}.
+\item \code{sign_env} (optional): named numeric vector of the
+same length as \code{r2_env}, with values typically in
+\code{-1, 0, 1}. This encodes \emph{direction} of the effect:
+negative values yield negative correlations with the
+corresponding environmental variable. If omitted, all
+signs default to +1.
+}}
 
-\item{env_data}{A data frame or matrix with one row per individual (or group)
-and one column per environmental variable. If a column called
-\code{group_id} is present, it will be carried through to the output so
-that components can be grouped in plots.}
+\item{env_data}{A data.frame with one row per group (e.g. site or
+condition). Must contain the environmental variables referenced
+in \code{r2_env}. If a column \code{group_id} is present, it is
+carried along in the output; otherwise groups are numbered 1..N.}
+
+\item{total_var}{Numeric. Target total variance for each component
+(after scaling). Default is 1. Internally, values are scaled to
+have approximately unit variance, so the absolute scale is less
+important than the \emph{relative contributions} of environment and
+noise.}
 }
 \value{
-A data frame with:
+A data.frame with:
 \itemize{
-\item \code{id} - row index (1..n),
-\item optional \code{group_id} (if present in \code{env_data}),
-\item one column per holobiont component.
+\item \code{id}: group index
+\item \code{group_id}: copied from \code{env_data$group_id} if present
+\item one column per component (e.g. \code{root_fungi_diversity})
 }
 }
 \description{
-Simulate holobiont components from environmental predictors
+This function generates \emph{group-level} holobiont component values
+(e.g. mean root fungal diversity per site) from environmental
+data and a component specification.
+}
+\details{
+The environmental contribution for a component is constructed as:
+\deqn{
+  \text{signal} = \sum_j \text{sign}_j \sqrt{R^2_j} \cdot \tilde{E}_j,
+}
+where \eqn{\tilde{E}_j} is the standardized environmental variable
+and \eqn{R^2_j \ge 0} is the variance contribution of variable \eqn{j}.
+The sign vector \code{sign_env} controls whether the correlation
+with a given environmental variable is positive or negative.
+
+The remaining variance is filled with Gaussian noise. The output
+columns are finally scaled to have approximately unit variance.
 }

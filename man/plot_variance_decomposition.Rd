@@ -4,31 +4,27 @@
 \alias{plot_variance_decomposition}
 \title{Plot variance decomposition for holobiont components}
 \usage{
-plot_variance_decomposition(power_results, components, var_host = 0)
+plot_variance_decomposition(power_results, components)
 }
 \arguments{
-\item{power_results}{A data frame returned by
-\code{simulate_holobiont_power()}. Only used for its component names
-(the power values themselves are not directly used here).}
+\item{power_results}{A data.frame returned by
+\code{simulate_holobiont_power()} containing, at minimum,
+columns \code{n_groups}, \code{n_per_group}, \code{power_env},
+and an attribute or column giving \code{var_host} (host variance
+fraction). For Phase 1 clone systems this is typically zero.}
 
-\item{components}{The component specification list used for simulation
-(the same object you pass to \code{simulate_holobiont_components()}).
-Each component must have an element \code{r2_env}.}
-
-\item{var_host}{Numeric scalar giving the fraction of variance you want
-to attribute to host effects (default 0 for clone systems).}
+\item{components}{The same \code{components} list used in
+\code{simulate_holobiont_power()}, i.e. a named list of component
+specifications with \code{r2_env}.}
 }
 \value{
-A stacked barplot (ggplot object) showing variance fractions
-for environment, host, and residual per component.
+A ggplot object showing stacked bars of variance components.
 }
 \description{
-This is a conceptual diagnostic: given the R² you specified for
-environment–component relationships, it shows how much variance is
-attributed to environment, host, and residual noise for each component.
+Shows, for each component, the relative contributions of:
+\itemize{
+\item environmental variance (sum of R² across all env variables),
+\item host variance (from the design/power results),
+\item residual variance.
 }
-\details{
-In the current Phase 1 implementation, host variance is not yet simulated,
-so the default is \code{var_host = 0}. You can change this to explore
-"what-if" scenarios (e.g. \code{var_host = 0.2}).
 }

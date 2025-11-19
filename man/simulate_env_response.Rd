@@ -2,50 +2,40 @@
 % Please edit documentation in R/simulate_env_response.R
 \name{simulate_env_response}
 \alias{simulate_env_response}
-\title{Simulate holobiont responses to environmental conditions}
+\title{Simulate holobiont responses at the individual level}
 \usage{
-simulate_env_response(env_data, components, host_model = NULL)
+simulate_env_response(env_data, components, host_model, total_var = 1)
 }
 \arguments{
-\item{env_data}{A data frame or matrix with environmental values.
-Rows are individuals (or groups), columns are variables
-like "temperature", "moisture", etc.}
+\item{env_data}{A data.frame with one row per individual. Must contain
+environmental variables referenced in each component's \code{r2_env}.
+A column \code{group_id} is optional (used for plotting/design).}
 
-\item{components}{A named list describing holobiont components
-and their R² with environment (see
-\code{simulate_holobiont_components()}).}
+\item{components}{A named list in the same format as for
+\code{simulate_holobiont_components()}, i.e. each element is a list
+with at least \code{r2_env} and optional \code{sign_env}.}
 
-\item{host_model}{Optional host model object created by
-\code{define_host_model()}. Currently included for API
-consistency; host-specific variance can be added in later
-development.}
+\item{host_model}{An object of class \code{"host_model"} created by
+\code{define_host_model()}. Only \code{type = "clone"} and its
+\code{var_host} are currently used; natural host-variance partitions
+can be added later.}
+
+\item{total_var}{Numeric. Total target variance per component (default 1).}
 }
 \value{
-A data frame with one row per row in \code{env_data}
-and one column per holobiont component (plus an \code{id}
-column).
+A data.frame with:
+\itemize{
+\item \code{id}: individual index
+\item \code{group_id}: if present in \code{env_data}
+\item one column per holobiont component
+}
 }
 \description{
-This is a high-level wrapper that takes:
+This function simulates individual-level holobiont component values
+(e.g. diversity, abundance, herbivore load) from:
 \itemize{
-\item individual- or group-level environmental data,
-\item a specification of holobiont components and their
-environment-driven R² values (see \code{simulate_holobiont_components()}),
-\item an optional host model (clone vs natural population).
+\item environmental data per individual,
+\item a host model (clone or natural),
+\item and a component specification with R² and signs.
 }
-}
-\details{
-For now, the host model is accepted but not used to add extra
-host-driven variance (this can be extended in future phases).
-}
-\examples{
-\dontrun{
-env_data <- env_space$realised[, c("temperature", "moisture")]
-components_spec <- list(
-  root_bacteria = list(r2_env = c(temperature = 0.3)),
-  root_fungi    = list(r2_env = c(temperature = 0.25, moisture = 0.10))
-)
-resp <- simulate_env_response(env_data, components_spec)
-}
-
 }
