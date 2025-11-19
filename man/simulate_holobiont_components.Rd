@@ -10,27 +10,21 @@ simulate_holobiont_components(components, env_data)
 \item{components}{A named list. Each entry defines one holobiont component
 and must contain an element \code{r2_env}, which is a named numeric vector
 giving the (approximate) variance contribution of each environmental
-variable. For example:
-\preformatted{
-  components = list(
-    root_bacteria = list(r2_env = c(temperature = 0.30)),
-    root_fungi    = list(r2_env = c(temperature = 0.25, moisture = 0.10))
-  )
-  }
-The sum of \code{r2_env} values is treated as the total R² of environment
-for that component; if it exceeds 1, it is truncated with a warning.}
+variable.}
 
 \item{env_data}{A data frame or matrix with one row per individual (or group)
-and one column per environmental variable (e.g. \code{temperature},
-\code{moisture}).}
+and one column per environmental variable. If a column called
+\code{group_id} is present, it will be carried through to the output so
+that components can be grouped in plots.}
 }
 \value{
-A data frame with one row per row in \code{env_data}, an \code{id}
-column, and one column per holobiont component. Values are on a latent
-standardised scale (mean ≈ 0, variance ≈ 1) unless rescaled later.
+A data frame with:
+\itemize{
+\item \code{id} – row index (1..n),
+\item optional \code{group_id} (if present in \code{env_data}),
+\item one column per holobiont component.
+}
 }
 \description{
-This function takes a specification of how strongly different environmental
-variables affect each holobiont component (in terms of R²) and simulates
-component values accordingly.
+Simulate holobiont components from environmental predictors
 }

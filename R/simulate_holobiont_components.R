@@ -1,30 +1,20 @@
 #' Simulate holobiont components from environmental predictors
 #'
-#' This function takes a specification of how strongly different environmental
-#' variables affect each holobiont component (in terms of R²) and simulates
-#' component values accordingly.
-#'
 #' @param components A named list. Each entry defines one holobiont component
 #'   and must contain an element \code{r2_env}, which is a named numeric vector
 #'   giving the (approximate) variance contribution of each environmental
-#'   variable. For example:
-#'   \preformatted{
-#'   components = list(
-#'     root_bacteria = list(r2_env = c(temperature = 0.30)),
-#'     root_fungi    = list(r2_env = c(temperature = 0.25, moisture = 0.10))
-#'   )
-#'   }
-#'   The sum of \code{r2_env} values is treated as the total R² of environment
-#'   for that component; if it exceeds 1, it is truncated with a warning.
-#'
+#'   variable.
 #' @param env_data A data frame or matrix with one row per individual (or group)
-#'   and one column per environmental variable (e.g. \code{temperature},
-#'   \code{moisture}).
+#'   and one column per environmental variable. If a column called
+#'   \code{group_id} is present, it will be carried through to the output so
+#'   that components can be grouped in plots.
 #'
-#' @return A data frame with one row per row in \code{env_data}, an \code{id}
-#'   column, and one column per holobiont component. Values are on a latent
-#'   standardised scale (mean ≈ 0, variance ≈ 1) unless rescaled later.
-#'
+#' @return A data frame with:
+#'   \itemize{
+#'     \item \code{id} – row index (1..n),
+#'     \item optional \code{group_id} (if present in \code{env_data}),
+#'     \item one column per holobiont component.
+#'   }
 #' @export
 simulate_holobiont_components <- function(components, env_data) {
 
@@ -39,7 +29,13 @@ simulate_holobiont_components <- function(components, env_data) {
   }
 
   env_data <- as.data.frame(env_data)
-  n <- nrow(env_data)
+  n        <- nrow(env_data)
+
+  has_group <- "group_id" %in% names(env_data)
+
+  # we will only use non-group env vars for simulation
+  env_vars <- setdiff(colnames(env_data), "group_id")
+
   res <- data.frame(id = seq_len(n))
 
   for (comp_name in names(components)) {
@@ -53,8 +49,8 @@ simulate_holobiont_components <- function(components, env_data) {
     r2_vec <- spec$r2_env
 
     # Check variables present in env_data
-    if (!all(names(r2_vec) %in% colnames(env_data))) {
-      missing_vars <- setdiff(names(r2_vec), colnames(env_data))
+    if (!all(names(r2_vec) %in% env_vars)) {
+      missing_vars <- setdiff(names(r2_vec), env_vars)
       stop(
         sprintf(
           "For component '%s', env variables not found in env_data: %s",
@@ -76,7 +72,7 @@ simulate_holobiont_components <- function(components, env_data) {
           comp_name, total_r2
         )
       )
-      res[[comp_name]] <- rnorm(n)
+      res[[comp_name]] <- stats::rnorm(n)
       next
     }
     if (total_r2 >= 1) {
@@ -96,12 +92,19 @@ simulate_holobiont_components <- function(components, env_data) {
     env_score <- drop(as.matrix(env_sub) %*% weights)
 
     # Independent noise
-    epsilon <- rnorm(n)
+    epsilon <- stats::rnorm(n)
 
     # Construct response: cor(env_score, Y)^2 ≈ total_r2
     y_latent <- sqrt(total_r2) * env_score + sqrt(1 - total_r2) * epsilon
 
     res[[comp_name]] <- y_latent
+  }
+
+  # Attach group_id if present
+  if (has_group) {
+    res$group_id <- env_data$group_id
+    # reorder columns: id, group_id, components...
+    res <- res[, c("id", "group_id", setdiff(names(res), c("id", "group_id")))]
   }
 
   return(res)
