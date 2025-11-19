@@ -13,7 +13,7 @@ define_env_locations(
 \arguments{
 \item{locations}{A data frame with one row per site/condition.
 Must contain either a column \code{group_id} or any of
-\code{location}, \code{site}, \code{condition}. All other numeric columns are
+\code{location}, \code{site}, \code{condition}. All other \strong{numeric} columns are
 treated as environmental variables (e.g. temperature, moisture).}
 
 \item{context}{Character, \code{"field"} or \code{"controlled"}.
@@ -21,11 +21,9 @@ Only used as a label in the resulting object.}
 
 \item{within_group_sd}{Either
 \itemize{
-\item a single numeric (same SD for all variables), or
+\item a single numeric (same SD for all env variables), or
 \item a named numeric vector with one SD per variable
-(names must match the environmental column names).
-This describes how much individual-level variation you expect
-\emph{within} each site/condition.
+(names must match the \emph{numeric} environmental variables).
 }}
 }
 \value{
@@ -35,8 +33,8 @@ An object of class \code{env_space}, with slots
 }
 \description{
 This is for the case where you already know which sites or
-experimental conditions are available (e.g. 3 field sites, 4
-growth chambers) and their typical environmental values.
+experimental conditions are available (e.g. field sites, growth chambers)
+and their typical environmental values.
 }
 \details{
 The function converts those into an \code{env_space} object that can be
